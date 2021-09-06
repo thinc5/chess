@@ -7,6 +7,20 @@
 #include "board.h"
 #include "input.h"
 
+const char *COMMAND_STRINGS[] = {
+    "COMMAND_INVALID",
+    "COMMAND_HELP",
+    "COMMAND_SAVE",
+    "COMMAND_ANSWER",
+    "COMMAND_LOAD",
+    "COMMAND_FORFEIT",
+    "COMMAND_CLEAR",
+    "COMMAND_SELECT",
+    "COMMAND_MOVE",
+    "COMMAND_PROMOTION",
+    "NUM_COMMANDS",
+};
+
 int input_to_index(char x, char y) {
     return ((y - '1') * BOARD_SIZE) + tolower(x) - 'a';
 }

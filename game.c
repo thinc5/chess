@@ -54,20 +54,23 @@ void toggle_player_turn(ChessGame *game) {
 
 bool move_piece(ChessGame *game, Command command) {
     int move_dest = input_to_index(game->input_buffer[0], game->input_buffer[1]);
-
-    // Process movement on a basic level.
-    MovementType movement = process_movement(game->next_board, &game->move_count, game->selected_piece, move_dest);
-
-    // Illegal move, ask for new input.
-    if (movement == MOVEMENT_ILLEGAL) {
-        set_board(game->board, game->next_board);
+    int valid_move = -1;
+    for (size_t i = 0; i < game->num_possible_moves; i++) {
+        if (move_dest == game->possible_moves[i].target) {
+            valid_move = i;
+            break;
+        }
+    }
+    if (valid_move < 0) {
+        printf("NO valid move!\n");
         return false;
     }
 
-    PlayPiece *selected_piece = &game->next_board[move_dest];
+    process_movement(game->next_board, game->move_count, game->selected_piece, move_dest, game->check);
+    PlayPiece *selected_piece = &game->next_board[game->selected_piece];
 
     // Handle a promotion?
-    if (movement == MOVEMENT_PAWN_PROMOTION) {
+    if (game->possible_moves[valid_move].type == MOVEMENT_PAWN_PROMOTION) {
         game->mode = OPERATION_PROMOTION;
         Command promotion = COMMAND_INVALID;
         while (promotion != COMMAND_PROMOTION) {
@@ -98,13 +101,16 @@ bool move_piece(ChessGame *game, Command command) {
     }
 
     // Did the player put themselves in checkmate or are they still in checkmate?
-    if (is_checkmate_for_player(game->next_board, game->next_board[game->selected_piece].colour, game->move_count)) {
+    if (is_checkmate_for_player(game->next_board, game->next_board[move_dest].colour, game->move_count, game->check)) {
+        printf("Checkmate, move aborted!\n");
         set_board(game->board, game->next_board);
         return false;
     }
 
     // Update the real board.
     set_board(game->next_board, game->board);
+    game->move_count++;
+    printf("game count: %ld\n", game->move_count);
     printf("Player %d (%s) has moved their %s to %c%c\n",
             game->turn + 1, PLAYER_COLOUR_STRINGS[game->turn],
             CHESS_PIECE_STRINGS[selected_piece->type],
@@ -121,20 +127,22 @@ void play_chess(ChessGame *game) {
     view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
 
     while (true) {
+        game->check = is_checkmate_for_player(game->board, game->turn, game->move_count, game->check);
+
         // Is the game over?
-        if (game->move_count < 0 && is_checkmate_for_player(game->board, game->turn, game->move_count)) {
-            if (!is_game_over_for_player(game->board, game->next_board, game->turn, game->move_count)) {
+        if (game->move_count < 0 && game->check) {
+            if (!is_game_over_for_player(game->board, game->next_board, game->turn, game->move_count, game->check)) {
                 printf("Checkmate! player %d (%s) wins!\n", ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
                         PLAYER_COLOUR_STRINGS[(game->turn + 1) % NUM_PLAYER_COLOURS]);
                 break;
             }
             printf("%s king located in check!\n", PLAYER_COLOUR_STRINGS[((game->turn + 1) % NUM_PLAYER_COLOURS) + 1]);
         }
-        
+
         // Show the selected piece if we have one.
         ChessPiece type = game->selected_piece == -1 ? PIECE_NONE : game->board[game->selected_piece].type;
         show_possible_moves(game->selected_piece, type, game->num_possible_moves, game->possible_moves);
-        
+
         // Get some input.
         show_prompt(game->turn, type);
         // Reset the buffer.
@@ -174,7 +182,7 @@ void play_chess(ChessGame *game) {
                         continue;
                     }
                     game->selected_piece = selected;
-                    game->num_possible_moves = get_possible_moves_for_piece(game->board, game->selected_piece, game->possible_moves, game->move_count);
+                    game->num_possible_moves = get_possible_moves_for_piece(game->board, game->selected_piece, game->possible_moves, game->move_count, game->check);
                     view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
                     game->mode = OPERATION_MOVE;
                     continue;
@@ -182,11 +190,8 @@ void play_chess(ChessGame *game) {
             case COMMAND_CLEAR:
                 clear_piece_selection(game);
                 continue;
-            case COMMAND_MOVE: {
-                    if (move_piece(game, command)) {
-                        break;
-                    }
-                }
+            case COMMAND_MOVE:
+                move_piece(game, command);
                 continue;
             case COMMAND_INVALID:
             default:

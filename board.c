@@ -12,10 +12,8 @@
     CREATE_PIECE(_colour, PIECE_ROOK),                      \
     CREATE_PIECE(_colour, PIECE_KNIGHT),                    \
     CREATE_PIECE(_colour, PIECE_BISHOP),                    \
-    CREATE_PIECE(_colour,                                   \
-        _colour == COLOUR_BLACK ? PIECE_QUEEN : PIECE_KING),\
-    CREATE_PIECE(_colour,                                   \
-        _colour == COLOUR_BLACK ? PIECE_KING : PIECE_QUEEN),\
+    CREATE_PIECE(_colour, PIECE_QUEEN),                     \
+    CREATE_PIECE(_colour, PIECE_KING),                      \
     CREATE_PIECE(_colour, PIECE_BISHOP),                    \
     CREATE_PIECE(_colour, PIECE_KNIGHT),                    \
     CREATE_PIECE(_colour, PIECE_ROOK)                       \

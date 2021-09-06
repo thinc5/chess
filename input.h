@@ -27,6 +27,8 @@ typedef enum {
     NUM_COMMANDS,
 } Command;
 
+extern const char *COMMAND_STRINGS[];
+
 int input_to_index(char x, char y);
 void read_line(char* input_buffer, size_t* input_pointer);
 Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode);

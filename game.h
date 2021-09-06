@@ -1,6 +1,8 @@
 #ifndef _GAME_H
 #define _GAME_H
 
+#include <stdbool.h>
+
 #include "board.h"
 
 #include "input.h"
@@ -15,6 +17,8 @@ typedef struct ChessGame {
     PlayerColour turn;
     // How many turns have happened in this game?
     size_t move_count;
+    // How checkmated is this player? (How many ways are they in check.)
+    size_t check;
     // Operation mode.
     OperationMode mode;
     // Selected piece, -1 for none.
@@ -29,5 +33,6 @@ typedef struct ChessGame {
 
 void init_chess_game(ChessGame *game);
 void play_chess(ChessGame *game);
+bool move_piece(ChessGame *game, Command command);
 
 #endif
