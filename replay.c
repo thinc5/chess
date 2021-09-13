@@ -15,6 +15,25 @@ typedef enum {
     NUM_FILE_FORMATS,
 } FileFormat;
 
+FileFormat determine_file_format(ChessGame *game, FILE *file) {
+    memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
+    game->input_pointer = 0;
+    char c;
+    while ((c = fgetc(file))) {
+        if (c == EOF || c == '\n') {
+            break;
+        }
+        game->input_buffer[game->input_pointer] = c;
+        game->input_pointer++;
+    }
+    if (strncmp(game->input_buffer, "raw", 3) == 0) {
+        return FORMAT_RAW;
+    } else if (strncmp(game->input_buffer, "pgn", 3) == 0) {
+        return FORMAT_PGN;
+    }
+    return FORMAT_INVALID;
+}
+
 void replay_chess(ChessGame *game, const char *filepath) {
     // Does file exist?
     FILE *file = fopen(filepath, "r");
@@ -24,21 +43,7 @@ void replay_chess(ChessGame *game, const char *filepath) {
     }
 
     // Read first line and determine the read mode.
-    FileFormat format = FORMAT_INVALID;
-    memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
-    game->input_pointer = 0;
-    while ((c = fgetc(file))) {
-        if (c == EOF || c == '\n') {
-            break;
-        }
-        game->input_buffer[game->input_pointer] = c;
-        game->input_pointer++;
-    }
-    if (strncmp(game->input_buffer, "raw", 3) == 0) {
-        format = FORMAT_RAW;
-    } else if (strncmp(game->input_buffer, "pgn", 3) == 0) {
-        format = FORMAT_PGN;
-    }
+    FileFormat format = determine_file_format(game, file);
 
     view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
     while (true) {

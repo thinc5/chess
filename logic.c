@@ -99,6 +99,22 @@ size_t is_checkmate_for_player(Board board, PlayerColour player, size_t move_cou
 }
 
 /**
+ * Is the game in a stalemate? Can this player make even one move?
+ */
+size_t is_game_stalemate(Board board, PlayerColour player, size_t move_count) {
+    size_t possible = 0;
+    for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        if (board[i].colour != player) {
+            continue;
+        }
+        PossibleMove possible_moves[MAX_POSSIBLE_MOVES] = {0};
+        size_t num_possible_moves = get_possible_moves_for_piece(board, i, possible_moves, move_count, 0);
+        possible += num_possible_moves;
+    }
+    return possible;
+}
+
+/**
  * Check if this player can make any more moves.
  */
 size_t is_game_over_for_player(Board board, Board next_board, PlayerColour player, size_t move_count, size_t check) {

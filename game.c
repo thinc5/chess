@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "pieces.h"
@@ -12,6 +13,7 @@
 #include "input.h"
 #include "display.h"
 #include "serialization.h"
+#include "network.h"
 #include "game.h"
 
 const char *HELP_MESSAGE = 
@@ -37,6 +39,7 @@ void init_chess_game(ChessGame *game) {
     new_board(game->board);
     set_board(game->board, game->next_board);
     // Set the starting player.
+    game->player = COLOUR_WHITE;
     game->turn = COLOUR_WHITE;
     // Start with 0 moves!
     game->move_count = 0;
@@ -117,7 +120,6 @@ bool move_piece(ChessGame *game, Command command) {
             INT_TO_COORD(move_dest));
 
     clear_piece_selection(game);
-    toggle_player_turn(game);
     view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
     return true;
 }
@@ -192,6 +194,121 @@ void play_chess(ChessGame *game) {
                 continue;
             case COMMAND_MOVE:
                 move_piece(game, command);
+                continue;
+            case COMMAND_INVALID:
+            default:
+                printf("Invalid command...\n");
+                continue;
+        }
+    }
+}
+
+void play_chess_networked(ProgramMode mode, ChessGame *game, int connection_fd) {
+    // Play the game of chess!
+    view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
+
+    while (true) {
+        game->check = is_checkmate_for_player(game->board, game->turn, game->move_count, game->check);
+
+        // Is the game over?
+        if (game->check) {
+            if (!is_game_over_for_player(game->board, game->next_board, game->turn, game->move_count, game->check)) {
+                printf("Checkmate! player %d (%s) wins!\n", ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
+                        PLAYER_COLOUR_STRINGS[(game->turn + 1) % NUM_PLAYER_COLOURS]);
+                break;
+            }
+            printf("%s king located in check!\n", PLAYER_COLOUR_STRINGS[((game->turn + 1) % NUM_PLAYER_COLOURS) + 1]);
+        // Check if the game is in stalemate since it is not in check
+        } else if (!is_game_stalemate(game->board, game->turn, game->move_count)) {
+                printf("Stalemate! Game ends in draw!\n");
+                break;
+        }
+
+        // Show the selected piece if we have one.
+        ChessPiece type = game->selected_piece == -1 ? PIECE_NONE : game->board[game->selected_piece].type;
+        show_possible_moves(game->selected_piece, type, game->num_possible_moves, game->possible_moves);
+
+        // Get some input.
+        // Reset the buffer.
+        memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
+        game->input_pointer = 0;
+        // Read a new line.
+        if (game->turn == game->player) {
+            // From user this user.
+            show_prompt(game->turn, type);
+            read_line(game->input_buffer, &game->input_pointer);
+        } else {
+            // From connection (other player).
+            printf("waiting for other player's turn\n");
+            game->input_pointer = read_network_line(connection_fd, game->input_buffer);
+            if (game->input_pointer == 0) {
+                printf("No input from other player, error\n");
+                return;
+            }
+            if (game->input_pointer == -1) {
+                printf("Player pipe broke, error\n");
+                return;
+            }
+            printf("Other player's command: %s\n", game->input_buffer);
+        }
+        // See if the input was syntactically valid.
+        Command command = parse_input(game->input_buffer, game->mode);
+        switch (command) {
+            case COMMAND_SAVE:
+                printf("Saving game...\n");
+                if (!serialize(game, "save.bin")) {
+                    printf("Unable to save game...\n");
+                    continue;
+                }
+                printf("Game saved...\n");
+                continue;
+            case COMMAND_LOAD:
+                printf("Loading game...\n");
+                if (!deserialize(game, "save.bin")) {
+                    printf("Unable to load game...\n");
+                    continue;
+                }
+                printf("Game loaded...\n");
+                view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
+                continue;
+            case COMMAND_FORFEIT:
+                if (game->turn == game->player) {
+                    write_network_line(connection_fd, game->input_buffer, (int) game->input_pointer);
+                }
+                printf("Player %s forfeits!\n", PLAYER_COLOUR_STRINGS[game->turn]);
+                return;
+            case COMMAND_HELP:
+                printf("%s", HELP_MESSAGE);
+                continue;
+            case COMMAND_SELECT: {
+                    int selected = input_to_index(game->input_buffer[0], game->input_buffer[1]);
+                    if (game->board[selected].type == PIECE_NONE || game->board[selected].colour != game->turn) {
+                        continue;
+                    }
+                    game->selected_piece = selected;
+                    game->num_possible_moves = get_possible_moves_for_piece(game->board, game->selected_piece, game->possible_moves, game->move_count, game->check);
+                    view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
+                    game->mode = OPERATION_MOVE;
+                    if (game->turn == game->player) {
+                        write_network_line(connection_fd, game->input_buffer, (int) game->input_pointer);
+                    }
+                    continue;
+                }
+            case COMMAND_CLEAR:
+                clear_piece_selection(game);
+                if (game->turn == game->player) {
+                    write_network_line(connection_fd, game->input_buffer, (int) game->input_pointer);
+                }
+                view_board(game->board, game->selected_piece, game->num_possible_moves, game->possible_moves);
+                continue;
+            case COMMAND_MOVE:
+                if (move_piece(game, command)) {
+                    printf("Successfully moved piece!\n");
+                    if (game->turn == game->player) {
+                        write_network_line(connection_fd, game->input_buffer, (int) game->input_pointer);
+                    }
+                    toggle_player_turn(game);
+                };
                 continue;
             case COMMAND_INVALID:
             default:

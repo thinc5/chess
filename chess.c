@@ -2,29 +2,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include "game.h"
 #include "replay.h"
-
-typedef enum {
-    MODE_LOCAL,
-    MODE_REPLAY,
-    MODE_HOST,
-    MODE_JOIN,
-    NUM_PROGRAM_MODES
-} ProgramMode;
-
-typedef enum {
-    PLAYER_HUMAN,
-    PLAYER_COMPUTER,
-    NUM_PLAYER_TYPES,
-} PlayerType;
-
-typedef struct {
-    ProgramMode prog_mode;
-    PlayerType player1;
-    PlayerType player2;
-} ChessArgs;
+#include "network.h"
 
 static void init_args(ChessArgs *args) {
     args->prog_mode = MODE_LOCAL;
@@ -34,10 +16,12 @@ static void init_args(ChessArgs *args) {
 
 static bool parse_args(ChessArgs *args, int argc, char **argv) {
     init_args(args);
-    if (argc >= 3) {
-        if (strncmp(argv[1], "run", 3) == 0) {
-            args->prog_mode = MODE_REPLAY;
-        }
+    if (strncmp(argv[1], "run", 3) == 0 && argc == 3) {
+        args->prog_mode = MODE_REPLAY;
+    } else if (strncmp(argv[1], "host", 4) == 0 && (argc == 2 || argc == 3)) {
+        args->prog_mode = MODE_HOST;
+    } else if (strncmp(argv[1], "join", 4) == 0 && (argc == 3 || argc == 4)) {
+        args->prog_mode = MODE_JOIN;
     }
     return true;
 }
@@ -45,6 +29,7 @@ static bool parse_args(ChessArgs *args, int argc, char **argv) {
 int main(int argc, char** argv) {
     static ChessGame game;
     static ChessArgs args;
+    static int connection_fd;
     // Parse user input.
     if (!parse_args(&args, argc, argv)) {
         printf("Error parsing args etc....");
@@ -60,7 +45,22 @@ int main(int argc, char** argv) {
             replay_chess(&game, argv[2]);
             break;
         case MODE_HOST:
+            connection_fd = host_server(argv[2]);
+            if (connection_fd == 0) {
+                return 0;
+            }
+            play_chess_networked(args.prog_mode, &game, connection_fd);
+            close(connection_fd);
+            break;
         case MODE_JOIN:
+            connection_fd = connect_to_sever(argv[2], argv[3]);
+            if (connection_fd == 0) {
+                return 0;
+            }
+            game.player = COLOUR_BLACK;
+            play_chess_networked(args.prog_mode, &game, connection_fd);
+            close(connection_fd);
+            break;
         default:
             printf("Unimplemented...\n");
             return 0;
