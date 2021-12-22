@@ -16,7 +16,9 @@ static void init_args(ChessArgs *args) {
 
 static bool parse_args(ChessArgs *args, int argc, char **argv) {
     init_args(args);
-    if (strncmp(argv[1], "run", 3) == 0 && argc == 3) {
+    if (argc < 2) {
+        return false;
+    } else if (strncmp(argv[1], "run", 3) == 0 && argc == 3) {
         args->prog_mode = MODE_REPLAY;
     } else if (strncmp(argv[1], "host", 4) == 0 && (argc == 2 || argc == 3)) {
         args->prog_mode = MODE_HOST;

@@ -2,3 +2,4 @@ chess
 *.txt
 *.bin
 vgcore.*
+obj/
