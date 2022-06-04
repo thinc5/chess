@@ -5,7 +5,8 @@
 
 #define INPUT_BUFFER_SIZE 1024
 
-typedef enum {
+typedef enum
+{
     OPERATION_SELECT,
     OPERATION_MOVE,
     OPERATION_QUESTION,
@@ -13,7 +14,8 @@ typedef enum {
     NUM_OPERATION_MODES
 } OperationMode;
 
-typedef enum {
+typedef enum
+{
     COMMAND_INVALID,
     COMMAND_HELP,
     COMMAND_SAVE,
@@ -30,7 +32,7 @@ typedef enum {
 extern const char *COMMAND_STRINGS[];
 
 int input_to_index(char x, char y);
-void read_line(char* input_buffer, size_t* input_pointer);
+void read_line(char *input_buffer, size_t *input_pointer);
 Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode);
 
 #endif

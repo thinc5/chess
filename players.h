@@ -3,7 +3,8 @@
 
 #include "pieces.h"
 
-typedef enum {
+typedef enum
+{
     COLOUR_WHITE,
     COLOUR_BLACK,
     NUM_PLAYER_COLOURS,

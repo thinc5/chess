@@ -4,7 +4,8 @@
 #include <stddef.h>
 
 // All the chess piece types.
-typedef enum {
+typedef enum
+{
     PIECE_NONE,
     PIECE_PAWN,
     PIECE_KNIGHT,

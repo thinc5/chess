@@ -1,6 +1,6 @@
 #include "players.h"
 
-const char* PLAYER_COLOUR_STRINGS[NUM_PLAYER_COLOURS] = {
+const char *PLAYER_COLOUR_STRINGS[NUM_PLAYER_COLOURS] = {
     [COLOUR_WHITE] = "white",
     [COLOUR_BLACK] = "black",
 };

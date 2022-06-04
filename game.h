@@ -4,11 +4,11 @@
 #include <stdbool.h>
 
 #include "board.h"
-
 #include "input.h"
 #include "movement.h"
 
-typedef enum {
+typedef enum
+{
     MODE_LOCAL,
     MODE_REPLAY,
     MODE_HOST,
@@ -16,19 +16,22 @@ typedef enum {
     NUM_PROGRAM_MODES
 } ProgramMode;
 
-typedef enum {
+typedef enum
+{
     PLAYER_HUMAN,
     PLAYER_COMPUTER,
     NUM_PLAYER_TYPES,
 } PlayerType;
 
-typedef struct {
+typedef struct
+{
     ProgramMode prog_mode;
     PlayerType player1;
     PlayerType player2;
 } ChessArgs;
 
-typedef struct ChessGame {
+typedef struct ChessGame
+{
     // The game board.
     Board board;
     // The phantom next board, the "perspective board".
@@ -55,7 +58,8 @@ typedef struct ChessGame {
 
 void init_chess_game(ChessGame *game);
 void play_chess(ChessGame *game);
-void play_chess_networked(ProgramMode mode, ChessGame *game, int connection_fd);
+void play_chess_networked(
+    ProgramMode mode, ChessGame *game, int connection_fd);
 bool move_piece(ChessGame *game, Command command);
 
 #endif

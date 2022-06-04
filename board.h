@@ -5,7 +5,8 @@
 
 #define BOARD_SIZE 8
 
-typedef struct {
+typedef struct
+{
     ChessPiece type;
     PlayerColour colour;
     size_t moves;
@@ -15,9 +16,9 @@ typedef struct {
 typedef PlayPiece Board[BOARD_SIZE * BOARD_SIZE];
 
 static const PlayPiece empty_space = {
-    .type = PIECE_NONE,
-    .colour = COLOUR_WHITE,
-    .moves = 0,
+    .type      = PIECE_NONE,
+    .colour    = COLOUR_WHITE,
+    .moves     = 0,
     .last_move = 0,
 };
 

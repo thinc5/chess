@@ -4,6 +4,7 @@ LINKER  := gcc
 LFLAGS	:=
 # LFLAGS	+=
 TARGET	:= chess
+FORMAT	:= clang-format
 
 SRCDIR	:= .
 INCDIR	:= .
@@ -17,11 +18,11 @@ findh	:= du -a $(INCDIR) | grep -E '\.(h)$$' | awk '{print $$2}'
 
 SOURCES  	:= $(shell $(findc))
 INCLUDES 	:= $(shell $(findh))
-RESOURCES	:= ./$(SRCDIR)/tiles.h ./$(SRCDIR)/font.h
+FORMATFILES	:= $(SOURCES) $(INCLUDES)
 
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-XTRADIR  := $(shell ls -d $(INCDIR)/*/** | grep -v $(OBJDIR) | sed 's/$(INCDIR)/$(OBJDIR)/g')
+XTRADIR  := $(shell ls -d $(INCDIR)/*/** 2> /dev/null || true | grep -v $(OBJDIR) | sed 's/$(INCDIR)/$(OBJDIR)/g')
 $(shell $(mkdir) $(OBJDIR) $(XTRADIR))
 
 all: build
@@ -44,7 +45,14 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
 	$(info Binary: $@)
 
-.PHONY:	clean
+.PHONY: $(FORMATFILES)
+
+$(FORMATFILES):
+	$(info Formatting: $@)
+	$(shell clang-format $@ > $@.temp)
+	$(shell mv $@.temp $@)
+
+.PHONY:	clean format
 
 clean:
 	$(rm) $(RESOURCES)
@@ -52,3 +60,5 @@ clean:
 	@echo "Cleanup complete!"
 	@$(rm) $(BINDIR)/$(TARGET)
 	@echo "Executable removed!"
+
+format: $(FORMATFILES)
