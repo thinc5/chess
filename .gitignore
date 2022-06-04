@@ -3,3 +3,4 @@ chess
 *.bin
 vgcore.*
 obj/
+*.unc*

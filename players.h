@@ -3,11 +3,10 @@
 
 #include "pieces.h"
 
-typedef enum
-{
-    COLOUR_WHITE,
-    COLOUR_BLACK,
-    NUM_PLAYER_COLOURS,
+typedef enum {
+	COLOUR_WHITE,
+	COLOUR_BLACK,
+	NUM_PLAYER_COLOURS,
 } PlayerColour;
 
 extern const char *PLAYER_COLOUR_STRINGS[NUM_PLAYER_COLOURS];

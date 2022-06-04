@@ -4,16 +4,15 @@
 #include <stddef.h>
 
 // All the chess piece types.
-typedef enum
-{
-    PIECE_NONE,
-    PIECE_PAWN,
-    PIECE_KNIGHT,
-    PIECE_ROOK,
-    PIECE_BISHOP,
-    PIECE_QUEEN,
-    PIECE_KING,
-    NUM_CHESS_PIECES,
+typedef enum {
+	PIECE_NONE,
+	PIECE_PAWN,
+	PIECE_KNIGHT,
+	PIECE_ROOK,
+	PIECE_BISHOP,
+	PIECE_QUEEN,
+	PIECE_KING,
+	NUM_CHESS_PIECES,
 } ChessPiece;
 
 extern const size_t STARTING_SIZES[NUM_CHESS_PIECES];

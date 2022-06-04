@@ -1,64 +1,60 @@
-CC		:= gcc
-CFLAGS  := -std=gnu11 -O3 -Wall -pedantic -MD
-LINKER  := gcc
-LFLAGS	:=
-# LFLAGS	+=
+CC				:= gcc
+CFLAGS  		:= -std=gnu11 -O3 -Wall -pedantic -MD
+LINKER  		:= gcc
+LFLAGS			:=
+FORMATTER		:= uncrustify
+FORMAT_CONFIG	:= clean.cfg
+
+SRCDIR			:= .
+INCDIR			:= .
+OBJDIR			:= obj
+OUTDIR			:= .
+
+RM				:= rm -rf
+MKDIR			:= mkdir -p
+FINDC			:= du -a $(SRCDIR) | grep -E '\.(c)$$' | awk '{print $$2}'
+FINDH			:= du -a $(INCDIR) | grep -E '\.(h)$$' | awk '{print $$2}'
+
+SOURCES  		:= $(shell $(FINDC))
+INCLUDES 		:= $(shell $(FINDH))
+FORMAT_TARGETS	:= $(SOURCES) $(INCLUDES)
+OBJECTS  		:= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
 TARGET	:= chess
-FORMAT	:= clang-format
 
-SRCDIR	:= .
-INCDIR	:= .
-OBJDIR	:= obj
-BINDIR	:= .
+ifeq ($(DEBUG), 1)
+    CFLAGS += -g -DDEBUG
+endif
 
-rm		:= rm -rf
-mkdir	:= mkdir -p
-findc	:= du -a $(SRCDIR) | grep -E '\.(c)$$' | awk '{print $$2}'
-findh	:= du -a $(INCDIR) | grep -E '\.(h)$$' | awk '{print $$2}'
-
-SOURCES  	:= $(shell $(findc))
-INCLUDES 	:= $(shell $(findh))
-FORMATFILES	:= $(SOURCES) $(INCLUDES)
-
-OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-
-XTRADIR  := $(shell ls -d $(INCDIR)/*/** 2> /dev/null || true | grep -v $(OBJDIR) | sed 's/$(INCDIR)/$(OBJDIR)/g')
-$(shell $(mkdir) $(OBJDIR) $(XTRADIR))
+default: build
 
 all: build
 
-debug: CFLAGS += -DDEBUG -g
-debug: LFLAGS += -DDEBUG -g
-debug: build
+$(OBJDIR):
+	@$(MKDIR) $(OBJDIR)
 
-build: $(OBJECTS) $(BINDIR)/$(TARGET)
+$(OBJDIR)/%.o : $(SRCDIR)/%.c
+	@$(CC) $(CFLAGS) -c $< -o $@
+	$(info Compiled $<)
+
+$(OUTDIR)/$(TARGET):
+	@$(LINKER) $(OBJDIR)/*.o $(LFLAGS) -o $@
+	$(info Binary: $@)
+
+build: $(OBJDIR) $(OBJECTS) $(OUTDIR)/$(TARGET)
 	$(info $(sed 's/$(INCDIR)/$(OBJDIR)/g'))
 
 rebuild: clean
 	$(MAKE) build
 
-$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
-	@$(CC) $(CFLAGS) -c $< -o $@
-	$(info Compiled $<)
+.PHONY:	clean format $(FORMAT_TARGETS)
 
-$(BINDIR)/$(TARGET): $(OBJECTS)
-	@$(LINKER) $(OBJECTS) $(LFLAGS) -o $@
-	$(info Binary: $@)
+$(FORMAT_TARGETS):
+	@$(FORMATTER) -c $(FORMAT_CONFIG) -q -f $@ -o $@
 
-.PHONY: $(FORMATFILES)
-
-$(FORMATFILES):
-	$(info Formatting: $@)
-	$(shell clang-format $@ > $@.temp)
-	$(shell mv $@.temp $@)
-
-.PHONY:	clean format
+format: $(FORMAT_TARGETS)
 
 clean:
-	$(rm) $(RESOURCES)
-	@$(rm) $(OBJDIR)
-	@echo "Cleanup complete!"
-	@$(rm) $(BINDIR)/$(TARGET)
-	@echo "Executable removed!"
-
-format: $(FORMATFILES)
+	@$(RM) $(OBJDIR)
+	@$(RM) *.unc*
+	@$(RM) $(TARGET)
