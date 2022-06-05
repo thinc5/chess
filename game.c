@@ -27,7 +27,8 @@ void clear_piece_selection(ChessGame *game)
 {
 	game->selected_piece = -1;
 	game->num_possible_moves = 0;
-	memset(game->possible_moves, 0, sizeof(PossibleMove) * MAX_POSSIBLE_MOVES);
+	memset(game->possible_moves, 0,
+	       sizeof(PossibleMove) * MAX_POSSIBLE_MOVES);
 	game->mode = OPERATION_SELECT;
 }
 
@@ -62,7 +63,8 @@ void toggle_player_turn(ChessGame *game)
 
 bool move_piece(ChessGame *game, Command command)
 {
-	int move_dest = input_to_index(game->input_buffer[0], game->input_buffer[1]);
+	int move_dest = input_to_index(game->input_buffer[0],
+				       game->input_buffer[1]);
 	int valid_move = -1;
 	for (size_t i = 0; i < game->num_possible_moves; i++) {
 		if (move_dest == game->possible_moves[i].target) {
@@ -75,7 +77,8 @@ bool move_piece(ChessGame *game, Command command)
 		return false;
 	}
 
-	process_movement(game->next_board, game->move_count, game->selected_piece,
+	process_movement(game->next_board, game->move_count,
+			 game->selected_piece,
 			 move_dest, game->check);
 	PlayPiece *selected_piece = &game->next_board[game->selected_piece];
 
@@ -126,7 +129,8 @@ bool move_piece(ChessGame *game, Command command)
 	printf("game count: %ld\n", game->move_count);
 	printf("Player %d (%s) has moved their %s to %c%c\n", game->turn + 1,
 	       PLAYER_COLOUR_STRINGS[game->turn],
-	       CHESS_PIECE_STRINGS[selected_piece->type], INT_TO_COORD(move_dest));
+	       CHESS_PIECE_STRINGS[selected_piece->type], INT_TO_COORD(
+		       move_dest));
 
 	clear_piece_selection(game);
 	view_board(game->board, game->selected_piece, game->num_possible_moves,
@@ -142,27 +146,35 @@ void play_chess(ChessGame *game)
 
 	while (true) {
 		game->check = is_checkmate_for_player(game->board, game->turn,
-						      game->move_count, game->check);
+						      game->move_count,
+						      game->check);
 
 		// Is the game over?
 		if (game->move_count < 0 && game->check) {
-			if (!is_game_over_for_player(game->board, game->next_board, game->turn,
-						     game->move_count, game->check)) {
+			if (!is_game_over_for_player(game->board,
+						     game->next_board,
+						     game->turn,
+						     game->move_count,
+						     game->check)) {
 				printf("Checkmate! player %d (%s) wins!\n",
 				       ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
-				       PLAYER_COLOUR_STRINGS[(game->turn + 1) % NUM_PLAYER_COLOURS]);
+				       PLAYER_COLOUR_STRINGS[(game->turn + 1) %
+							     NUM_PLAYER_COLOURS]);
 				break;
 			}
 			printf(
 				"%s king located in check!\n",
-				PLAYER_COLOUR_STRINGS[((game->turn + 1) % NUM_PLAYER_COLOURS) + 1]);
+				PLAYER_COLOUR_STRINGS[((game->turn + 1) %
+						       NUM_PLAYER_COLOURS) +
+						      1]);
 		}
 
 		// Show the selected piece if we have one.
 		ChessPiece type = game->selected_piece == -1
 			  ? PIECE_NONE
 			  : game->board[game->selected_piece].type;
-		show_possible_moves(game->selected_piece, type, game->num_possible_moves,
+		show_possible_moves(game->selected_piece, type,
+				    game->num_possible_moves,
 				    game->possible_moves);
 
 		// Get some input.
@@ -190,28 +202,33 @@ void play_chess(ChessGame *game)
 				continue;
 			}
 			printf("Game loaded...\n");
-			view_board(game->board, game->selected_piece, game->num_possible_moves,
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
 				   game->possible_moves);
 			continue;
 		case COMMAND_FORFEIT:
-			printf("Player %d forfeits, Player %d wins!\n", game->turn + 1,
-			       game->turn);
+			printf("%s player forfeits, %s player wins!\n",
+			       PLAYER_COLOUR_STRINGS[game->turn + 1],
+			       PLAYER_COLOUR_STRINGS[game->turn]);
 			return;
 		case COMMAND_HELP:
 			printf("%s", HELP_MESSAGE);
 			continue;
 		case COMMAND_SELECT: {
 			int selected =
-				input_to_index(game->input_buffer[0], game->input_buffer[1]);
+				input_to_index(game->input_buffer[0],
+					       game->input_buffer[1]);
 			if (game->board[selected].type == PIECE_NONE ||
 			    game->board[selected].colour != game->turn) {
 				continue;
 			}
 			game->selected_piece = selected;
 			game->num_possible_moves = get_possible_moves_for_piece(
-				game->board, game->selected_piece, game->possible_moves,
+				game->board, game->selected_piece,
+				game->possible_moves,
 				game->move_count, game->check);
-			view_board(game->board, game->selected_piece, game->num_possible_moves,
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
 				   game->possible_moves);
 			game->mode = OPERATION_MOVE;
 			continue;
@@ -239,23 +256,31 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 
 	while (true) {
 		game->check = is_checkmate_for_player(game->board, game->turn,
-						      game->move_count, game->check);
+						      game->move_count,
+						      game->check);
 
 		// Is the game over?
 		if (game->check) {
-			if (!is_game_over_for_player(game->board, game->next_board, game->turn,
-						     game->move_count, game->check)) {
+			if (!is_game_over_for_player(game->board,
+						     game->next_board,
+						     game->turn,
+						     game->move_count,
+						     game->check)) {
 				printf("Checkmate! player %d (%s) wins!\n",
 				       ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
-				       PLAYER_COLOUR_STRINGS[(game->turn + 1) % NUM_PLAYER_COLOURS]);
+				       PLAYER_COLOUR_STRINGS[(game->turn + 1) %
+							     NUM_PLAYER_COLOURS]);
 				break;
 			}
 			printf(
 				"%s king located in check!\n",
-				PLAYER_COLOUR_STRINGS[((game->turn + 1) % NUM_PLAYER_COLOURS) + 1]);
+				PLAYER_COLOUR_STRINGS[((game->turn + 1) %
+						       NUM_PLAYER_COLOURS) +
+						      1]);
 			// Check if the game is in stalemate since it is not in
 			// check
-		} else if (!is_game_stalemate(game->board, game->turn, game->move_count)) {
+		} else if (!is_game_stalemate(game->board, game->turn,
+					      game->move_count)) {
 			printf("Stalemate! Game ends in draw!\n");
 			break;
 		}
@@ -264,7 +289,8 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 		ChessPiece type = game->selected_piece == -1
 			  ? PIECE_NONE
 			  : game->board[game->selected_piece].type;
-		show_possible_moves(game->selected_piece, type, game->num_possible_moves,
+		show_possible_moves(game->selected_piece, type,
+				    game->num_possible_moves,
 				    game->possible_moves);
 
 		// Get some input.
@@ -280,7 +306,8 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 			// From connection (other player).
 			printf("waiting for other player's turn\n");
 			game->input_pointer =
-				read_network_line(connection_fd, game->input_buffer);
+				read_network_line(connection_fd,
+						  game->input_buffer);
 			if (game->input_pointer == 0) {
 				printf("No input from other player, error\n");
 				return;
@@ -289,7 +316,8 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 				printf("Player pipe broke, error\n");
 				return;
 			}
-			printf("Other player's command: %s\n", game->input_buffer);
+			printf("Other player's command: %s\n",
+			       game->input_buffer);
 		}
 		// See if the input was syntactically valid.
 		Command command = parse_input(game->input_buffer, game->mode);
@@ -309,35 +337,42 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 				continue;
 			}
 			printf("Game loaded...\n");
-			view_board(game->board, game->selected_piece, game->num_possible_moves,
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
 				   game->possible_moves);
 			continue;
 		case COMMAND_FORFEIT:
 			if (game->turn == game->player) {
-				write_network_line(connection_fd, game->input_buffer,
+				write_network_line(connection_fd,
+						   game->input_buffer,
 						   (int)game->input_pointer);
 			}
-			printf("Player %s forfeits!\n", PLAYER_COLOUR_STRINGS[game->turn]);
+			printf("Player %s forfeits!\n",
+			       PLAYER_COLOUR_STRINGS[game->turn]);
 			return;
 		case COMMAND_HELP:
 			printf("%s", HELP_MESSAGE);
 			continue;
 		case COMMAND_SELECT: {
 			int selected =
-				input_to_index(game->input_buffer[0], game->input_buffer[1]);
+				input_to_index(game->input_buffer[0],
+					       game->input_buffer[1]);
 			if (game->board[selected].type == PIECE_NONE ||
 			    game->board[selected].colour != game->turn) {
 				continue;
 			}
 			game->selected_piece = selected;
 			game->num_possible_moves = get_possible_moves_for_piece(
-				game->board, game->selected_piece, game->possible_moves,
+				game->board, game->selected_piece,
+				game->possible_moves,
 				game->move_count, game->check);
-			view_board(game->board, game->selected_piece, game->num_possible_moves,
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
 				   game->possible_moves);
 			game->mode = OPERATION_MOVE;
 			if (game->turn == game->player) {
-				write_network_line(connection_fd, game->input_buffer,
+				write_network_line(connection_fd,
+						   game->input_buffer,
 						   (int)game->input_pointer);
 			}
 			continue;
@@ -345,17 +380,20 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 		case COMMAND_CLEAR:
 			clear_piece_selection(game);
 			if (game->turn == game->player) {
-				write_network_line(connection_fd, game->input_buffer,
+				write_network_line(connection_fd,
+						   game->input_buffer,
 						   (int)game->input_pointer);
 			}
-			view_board(game->board, game->selected_piece, game->num_possible_moves,
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
 				   game->possible_moves);
 			continue;
 		case COMMAND_MOVE:
 			if (move_piece(game, command)) {
 				printf("Successfully moved piece!\n");
 				if (game->turn == game->player) {
-					write_network_line(connection_fd, game->input_buffer,
+					write_network_line(connection_fd,
+							   game->input_buffer,
 							   (int)game->input_pointer);
 				}
 				toggle_player_turn(game);

@@ -39,7 +39,8 @@ MovementType process_movement(Board board, size_t move_count, int selected,
 		break;
 	case MOVEMENT_PAWN_EN_PASSANT:
 		// Remove target pawn, rest is the same.
-		board[dest + (colour == COLOUR_WHITE ? BOARD_SIZE : -BOARD_SIZE)] =
+		board[dest +
+		      (colour == COLOUR_WHITE ? BOARD_SIZE : -BOARD_SIZE)] =
 			empty_space;
 	case MOVEMENT_PIECE_TAKE:
 	case MOVEMENT_PAWN_PROMOTION:
@@ -91,7 +92,8 @@ size_t is_checkmate_for_player(Board board, PlayerColour player,
 		// Get this pieces possible moves.
 		PossibleMove possible_moves[MAX_POSSIBLE_MOVES] = { 0 };
 		size_t num_possible_moves =
-			get_possible_moves_for_piece(board, i, possible_moves, move_count, 0);
+			get_possible_moves_for_piece(board, i, possible_moves,
+						     move_count, 0);
 		if (num_possible_moves < 1) {
 			continue;
 		}
@@ -120,7 +122,8 @@ size_t is_game_stalemate(Board board, PlayerColour player, size_t move_count)
 		}
 		PossibleMove possible_moves[MAX_POSSIBLE_MOVES] = { 0 };
 		size_t num_possible_moves =
-			get_possible_moves_for_piece(board, i, possible_moves, move_count, 0);
+			get_possible_moves_for_piece(board, i, possible_moves,
+						     move_count, 0);
 		possible += num_possible_moves;
 	}
 	return possible;
@@ -156,8 +159,10 @@ size_t is_game_over_for_player(Board board, Board next_board,
 		// printf("Checking if piece %c%c breaks checkmate\n",
 		// INT_TO_COORD(i)); Get possible moves.
 		PossibleMove possible_moves[MAX_POSSIBLE_MOVES] = { 0 };
-		size_t possible = get_possible_moves_for_piece(board, i, possible_moves,
-							       move_count, check);
+		size_t possible = get_possible_moves_for_piece(board, i,
+							       possible_moves,
+							       move_count,
+							       check);
 		if (possible < 1) {
 			continue;
 		}
@@ -165,17 +170,22 @@ size_t is_game_over_for_player(Board board, Board next_board,
 		for (int m = 0; m < possible; m++) {
 			// Process all movements for this piece, and if the
 			// movement is valid, see if it saves the king.
-			if (process_movement(next_board, move_count, i, possible_moves[m].target,
+			if (process_movement(next_board, move_count, i,
+					     possible_moves[m].target,
 					     check) != MOVEMENT_ILLEGAL) {
 				size_t checkmate =
-					is_checkmate_for_player(next_board, player, move_count, check);
+					is_checkmate_for_player(next_board,
+								player,
+								move_count,
+								check);
 				// Reset the state.
 				set_board(board, next_board);
 				if (checkmate < 1) {
 					printf("Piece can break check %s (%s) "
 					       "%c%c to %c%c\n",
 					       CHESS_PIECE_STRINGS[board[i].type],
-					       PLAYER_COLOUR_STRINGS[player], INT_TO_COORD(i),
+					       PLAYER_COLOUR_STRINGS[player], INT_TO_COORD(
+						       i),
 					       INT_TO_COORD(m));
 					// view_board(next_board);
 					breakable++;

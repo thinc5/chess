@@ -27,7 +27,8 @@ void view_board(Board board, int selected, size_t possible_moves,
 			// Do we have a target at this location?
 			bool matched = false;
 			for (int i = 0; i < possible_moves; i++) {
-				if (possible[i].target == ((row - 1) * BOARD_SIZE) + col) {
+				if (possible[i].target ==
+				    ((row - 1) * BOARD_SIZE) + col) {
 					switch (possible[i].type) {
 					case MOVEMENT_NORMAL:
 					case MOVEMENT_PAWN_LONG_JUMP:
@@ -53,8 +54,10 @@ void view_board(Board board, int selected, size_t possible_moves,
 			}
 			// Else print this.
 			if (!matched) {
-				PlayPiece piece = board[((row - 1) * BOARD_SIZE) + col];
-				printf("%s", PIECE_SYMBOLS[piece.colour][piece.type]);
+				PlayPiece piece =
+					board[((row - 1) * BOARD_SIZE) + col];
+				printf("%s",
+				       PIECE_SYMBOLS[piece.colour][piece.type]);
 			}
 			printf("|");
 		}
@@ -77,8 +80,10 @@ void show_prompt(PlayerColour turn, ChessPiece piece)
 void show_promotion_prompt(PlayerColour turn, int selected)
 {
 	printf("Promotion for %s at %c%c; Q (%s), K (%s), R (%s), B (%s)? %c ",
-	       PIECE_SYMBOLS[turn][PIECE_PAWN], INT_TO_COORD(selected),
-	       PIECE_SYMBOLS[turn][PIECE_QUEEN], PIECE_SYMBOLS[turn][PIECE_KNIGHT],
+	       PIECE_SYMBOLS[turn][PIECE_PAWN], INT_TO_COORD(
+		       selected),
+	       PIECE_SYMBOLS[turn][PIECE_QUEEN],
+	       PIECE_SYMBOLS[turn][PIECE_KNIGHT],
 	       PIECE_SYMBOLS[turn][PIECE_ROOK], PIECE_SYMBOLS[turn][PIECE_BISHOP],
 	       INPUT_PROMPT_SYMBOL);
 }
@@ -95,13 +100,15 @@ void show_possible_moves(int selected, ChessPiece piece, size_t possible_moves,
 		return;
 	}
 	if (possible_moves < 1) {
-		printf("No possible moves for selected %s\n", CHESS_PIECE_STRINGS[piece]);
+		printf("No possible moves for selected %s\n",
+		       CHESS_PIECE_STRINGS[piece]);
 		return;
 	}
 	printf("Possible moves for %s (%c%c):", CHESS_PIECE_STRINGS[piece],
 	       INT_TO_COORD(selected));
 	for (int i = 0; i < possible_moves; i++) {
-		printf(" %c%c (%d) (type: %d)", INT_TO_COORD(possible[i].target),
+		printf(" %c%c (%d) (type: %d)", INT_TO_COORD(
+			       possible[i].target),
 		       possible[i].target, possible[i].type);
 	}
 	printf("\n");

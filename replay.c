@@ -52,21 +52,32 @@ void replay_chess(ChessGame *game, const char *filepath)
 	while (true) {
 		// Is the game over?
 		if (game->move_count > 0) {
-			game->check = is_checkmate_for_player(game->board, game->turn,
-							      game->move_count, game->check);
+			game->check = is_checkmate_for_player(game->board,
+							      game->turn,
+							      game->move_count,
+							      game->check);
 			if (game->check) {
-				if (!is_game_over_for_player(game->board, game->next_board, game->turn,
-							     game->move_count, game->check)) {
+				if (!is_game_over_for_player(game->board,
+							     game->next_board,
+							     game->turn,
+							     game->move_count,
+							     game->check)) {
 					printf("Checkmate! player %d (%s) wins "
 					       "with %ld moves!\n",
-					       ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
-					       PLAYER_COLOUR_STRINGS[(game->turn + 1) % NUM_PLAYER_COLOURS],
+					       ((game->turn + 1) %
+						NUM_PLAYER_COLOURS) + 1,
+					       PLAYER_COLOUR_STRINGS[(game->turn
+								      + 1) %
+								     NUM_PLAYER_COLOURS],
 					       game->move_count);
 					break;
 				}
 				printf(
 					"%s king located in check!\n",
-					PLAYER_COLOUR_STRINGS[((game->turn + 1) % NUM_PLAYER_COLOURS) + 1]);
+					PLAYER_COLOUR_STRINGS[((game->turn +
+								1) %
+							       NUM_PLAYER_COLOURS)
+							      + 1]);
 			}
 		}
 
@@ -108,16 +119,19 @@ void replay_chess(ChessGame *game, const char *filepath)
 			continue;
 		case COMMAND_SELECT: {
 			int selected =
-				input_to_index(game->input_buffer[0], game->input_buffer[1]);
+				input_to_index(game->input_buffer[0],
+					       game->input_buffer[1]);
 			if (game->board[selected].type == PIECE_NONE ||
 			    game->board[selected].colour != game->turn) {
 				continue;
 			}
 			game->selected_piece = selected;
 			game->num_possible_moves = get_possible_moves_for_piece(
-				game->board, game->selected_piece, game->possible_moves,
+				game->board, game->selected_piece,
+				game->possible_moves,
 				game->move_count, game->check);
-			view_board(game->board, game->selected_piece, game->num_possible_moves,
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
 				   game->possible_moves);
 			game->mode = OPERATION_MOVE;
 			// show_possible_moves(game->selected_piece,

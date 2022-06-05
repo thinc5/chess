@@ -24,7 +24,8 @@ static const int POSSIBLE_MOVES[NUM_CHESS_PIECES + 1][11][2] = {
 	[PIECE_NONE] = { { 0 } },
 	// Include both pawn's possible moves.
 	[PIECE_PAWN] =
-	{ { -1, 1 }, { 0, 1 }, { 1, 1 }, { 0, 2 }, { -1, -1 }, { 0, -1 }, { 1, -1 }, { 0, -2 } },
+	{ { -1, 1 }, { 0, 1 }, { 1, 1 }, { 0, 2 }, { -1, -1 }, { 0, -1 },
+	  { 1, -1 }, { 0, -2 } },
 	[PIECE_KNIGHT] = { { 1, -2 },
 			   { 2, -1 },
 			   { 2, 1 },
@@ -50,7 +51,8 @@ static const int POSSIBLE_MOVES[NUM_CHESS_PIECES + 1][11][2] = {
 };
 
 static const int POSSIBLE_MOVE_NUMS[NUM_CHESS_PIECES] = {
-	[PIECE_NONE] = 0, [PIECE_PAWN] = 8, [PIECE_KNIGHT] = 8, [PIECE_ROOK] = 0,
+	[PIECE_NONE] = 0, [PIECE_PAWN] = 8, [PIECE_KNIGHT] = 8,
+	[PIECE_ROOK] = 0,
 	[PIECE_BISHOP] = 0, [PIECE_QUEEN] = 0, [PIECE_KING] = 10
 };
 
@@ -143,7 +145,8 @@ static inline MoveStats get_move_stats(int start, int target)
 		       .start_y = start_y,
 		       .target_y = target_y,
 		       .dist_y = abs(target_y - start_y),
-		       .direction = get_movement_direction(start_x, start_y, target_x, target_y),
+		       .direction = get_movement_direction(start_x, start_y,
+							   target_x, target_y),
 	};
 }
 
@@ -199,22 +202,26 @@ static inline bool diagonal_movement(Board board, MoveStats *stats)
 	switch (stats->direction) {
 	case DIRECTION_NORTH_EAST:
 		for (int d = 1; d < stats->dist_x; d++)
-			if (board[((stats->start_y + d) * BOARD_SIZE) + stats->start_x + d].type)
+			if (board[((stats->start_y + d) * BOARD_SIZE) +
+				  stats->start_x + d].type)
 				return false;
 		break;
 	case DIRECTION_SOUTH_EAST:
 		for (int d = 1; d < stats->dist_x; d++)
-			if (board[((stats->start_y - d) * BOARD_SIZE) + stats->start_x + d].type)
+			if (board[((stats->start_y - d) * BOARD_SIZE) +
+				  stats->start_x + d].type)
 				return false;
 		break;
 	case DIRECTION_SOUTH_WEST:
 		for (int d = 1; d < stats->dist_x; d++)
-			if (board[((stats->start_y - d) * BOARD_SIZE) + stats->start_x - d].type)
+			if (board[((stats->start_y - d) * BOARD_SIZE) +
+				  stats->start_x - d].type)
 				return false;
 		break;
 	case DIRECTION_NORTH_WEST:
 		for (int d = 1; d < stats->dist_x; d++)
-			if (board[((stats->start_y + d) * BOARD_SIZE) + stats->start_x - d].type)
+			if (board[((stats->start_y + d) * BOARD_SIZE) +
+				  stats->start_x - d].type)
 				return false;
 		break;
 	default:
@@ -245,7 +252,8 @@ MovementType pawn_movement_algorithm(Board board, int start, int target,
 	}
 	MoveStats stats = get_move_stats(start, target);
 	// Can only move forward.
-	if (!moving_forward(board[start].colour, stats.start_y, stats.target_y)) {
+	if (!moving_forward(board[start].colour, stats.start_y,
+			    stats.target_y)) {
 		return MOVEMENT_ILLEGAL;
 	}
 	switch (stats.dist_y) {
@@ -357,7 +365,8 @@ MovementType queen_movement_algorithm(Board board, int start, int target,
 	if (!can_move(board, start, target))
 		return MOVEMENT_ILLEGAL;
 	MoveStats stats = get_move_stats(start, target);
-	if (!parallel_movement(board, &stats) && !diagonal_movement(board, &stats))
+	if (!parallel_movement(board,
+			       &stats) && !diagonal_movement(board, &stats))
 		return MOVEMENT_ILLEGAL;
 	if (board[target].type != PIECE_NONE)
 		return MOVEMENT_PIECE_TAKE;
@@ -379,7 +388,8 @@ MovementType king_movement_algorithm(Board board, int start, int target,
 			int rook_location = target + 1;
 			// Check that the rook exists at correct location and has
 			// made no moves.
-			if (board[rook_location].colour != board[start].colour ||
+			if (board[rook_location].colour !=
+			    board[start].colour ||
 			    board[rook_location].type != PIECE_ROOK ||
 			    board[rook_location].moves != 0) {
 				return MOVEMENT_ILLEGAL;
@@ -396,7 +406,8 @@ MovementType king_movement_algorithm(Board board, int start, int target,
 			int rook_location = target - 2;
 			// Check that the rook exists at correct location and has
 			// made no moves.
-			if (board[rook_location].colour != board[start].colour ||
+			if (board[rook_location].colour !=
+			    board[start].colour ||
 			    board[rook_location].type != PIECE_ROOK ||
 			    board[rook_location].moves != 0) {
 				return MOVEMENT_ILLEGAL;
@@ -414,7 +425,8 @@ MovementType king_movement_algorithm(Board board, int start, int target,
 	if (stats.dist_x > 1 || stats.dist_y > 1) {
 		return MOVEMENT_ILLEGAL;
 	}
-	if (!parallel_movement(board, &stats) && !diagonal_movement(board, &stats)) {
+	if (!parallel_movement(board,
+			       &stats) && !diagonal_movement(board, &stats)) {
 		return MOVEMENT_ILLEGAL;
 	}
 	if (board[target].type != PIECE_NONE) {
@@ -436,8 +448,9 @@ possible_parallel_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + (y * BOARD_SIZE);
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -458,8 +471,9 @@ possible_parallel_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + (y * BOARD_SIZE);
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -480,8 +494,9 @@ possible_parallel_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + x;
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -502,8 +517,9 @@ possible_parallel_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + x;
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -532,8 +548,9 @@ possible_diagonal_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + (d * BOARD_SIZE) + d;
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -554,8 +571,9 @@ possible_diagonal_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + (-d * BOARD_SIZE) + d;
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -576,8 +594,9 @@ possible_diagonal_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + (-d * BOARD_SIZE) - d;
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -598,8 +617,9 @@ possible_diagonal_movements(Board board, int location, size_t *possible,
 			break;
 		}
 		int new_loc = location + (d * BOARD_SIZE) - d;
-		MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-			board, location, new_loc, move_count, check);
+		MovementType type =
+			PIECE_MOVEMENT_ALGORITHM[board[location].type](
+				board, location, new_loc, move_count, check);
 		if (type == MOVEMENT_ILLEGAL) {
 			break;
 		}
@@ -624,20 +644,29 @@ get_possible_moves_for_piece(Board board, int location,
 	case PIECE_PAWN:
 	case PIECE_KNIGHT:
 	case PIECE_KING: {
-		for (int i = 0; i < POSSIBLE_MOVE_NUMS[board[location].type]; i++) {
+		for (int i = 0; i < POSSIBLE_MOVE_NUMS[board[location].type];
+		     i++) {
 			// Prevent wrap around/overlap.
 			int new_x =
-				(location % BOARD_SIZE) + POSSIBLE_MOVES[board[location].type][i][0];
+				(location % BOARD_SIZE) +
+				POSSIBLE_MOVES[board[location].type][i][0];
 			int new_y =
-				(location / BOARD_SIZE) + POSSIBLE_MOVES[board[location].type][i][1];
-			if (new_y < 0 || new_y >= BOARD_SIZE || new_x >= BOARD_SIZE ||
+				(location / BOARD_SIZE) +
+				POSSIBLE_MOVES[board[location].type][i][1];
+			if (new_y < 0 || new_y >= BOARD_SIZE ||
+			    new_x >= BOARD_SIZE ||
 			    new_x < 0) {
 				continue;
 			}
-			int new_loc = location + (POSSIBLE_MOVES[board[location].type][i][0]) +
-				      (POSSIBLE_MOVES[board[location].type][i][1] * BOARD_SIZE);
-			MovementType type = PIECE_MOVEMENT_ALGORITHM[board[location].type](
-				board, location, new_loc, move_count, check);
+			int new_loc = location +
+				      (POSSIBLE_MOVES[board[location].type][i][0
+				       ]) +
+				      (POSSIBLE_MOVES[board[location].type][i][1
+				       ] * BOARD_SIZE);
+			MovementType type =
+				PIECE_MOVEMENT_ALGORITHM[board[location].type](
+					board, location, new_loc, move_count,
+					check);
 			if (type > MOVEMENT_ILLEGAL) {
 				possible_moves[possible] = (PossibleMove){
 					.type = type,
@@ -648,17 +677,21 @@ get_possible_moves_for_piece(Board board, int location,
 		}
 	} break;
 	case PIECE_ROOK:
-		possible_parallel_movements(board, location, &possible, possible_moves,
+		possible_parallel_movements(board, location, &possible,
+					    possible_moves,
 					    move_count, check);
 		break;
 	case PIECE_BISHOP:
-		possible_diagonal_movements(board, location, &possible, possible_moves,
+		possible_diagonal_movements(board, location, &possible,
+					    possible_moves,
 					    move_count, check);
 		break;
 	case PIECE_QUEEN:
-		possible_parallel_movements(board, location, &possible, possible_moves,
+		possible_parallel_movements(board, location, &possible,
+					    possible_moves,
 					    move_count, check);
-		possible_diagonal_movements(board, location, &possible, possible_moves,
+		possible_diagonal_movements(board, location, &possible,
+					    possible_moves,
 					    move_count, check);
 		break;
 	case PIECE_NONE:

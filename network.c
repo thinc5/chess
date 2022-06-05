@@ -28,7 +28,8 @@ int host_server(const char *port)
 	// Create socket to listen on, use IP and TCP.
 	int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	int yes_reuse = 1;
-	setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes_reuse, sizeof(int));
+	setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes_reuse,
+		   sizeof(int));
 	if (socket_fd == -1) {
 		printf("socket creation failed...\n");
 		return 0;
@@ -67,7 +68,8 @@ int host_server(const char *port)
 	// Accept client connection
 	struct sockaddr_in client_addr;
 	unsigned int len = sizeof(client_addr);
-	int connection_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &len);
+	int connection_fd = accept(socket_fd, (struct sockaddr *)&client_addr,
+				   &len);
 	if (connection_fd < 0) {
 		printf("server acccept failed...\n");
 		return 0;
@@ -121,7 +123,8 @@ int read_network_line(int fd, char *input_buffer)
 	int bytes_read = 0;
 	while (bytes_read < INPUT_BUFFER_SIZE) {
 		int read_chunk =
-			read(fd, input_buffer + bytes_read, INPUT_BUFFER_SIZE - bytes_read);
+			read(fd, input_buffer + bytes_read,
+			     INPUT_BUFFER_SIZE - bytes_read);
 		if (read_chunk <= 0) {
 			break;
 		}
@@ -136,6 +139,7 @@ int read_network_line(int fd, char *input_buffer)
 int write_network_line(int fd, char *input_buffer, int size)
 {
 	int bytes_written = send(fd, input_buffer, size, MSG_DONTWAIT);
-	printf("%d (%d) bytes written (%s)\n", bytes_written, size, input_buffer);
+	printf("%d (%d) bytes written (%s)\n", bytes_written, size,
+	       input_buffer);
 	return bytes_written;
 }

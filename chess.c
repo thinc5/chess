@@ -24,9 +24,11 @@ static bool parse_args(ChessArgs *args, int argc, char **argv)
 	case 3:
 		if (strncmp(argv[1], "run", 3) == 0 && argc == 3) {
 			args->prog_mode = MODE_REPLAY;
-		} else if (strncmp(argv[1], "host", 4) == 0 && (argc == 2 || argc == 3)) {
+		} else if (strncmp(argv[1], "host",
+				   4) == 0 && (argc == 2 || argc == 3)) {
 			args->prog_mode = MODE_HOST;
-		} else if (strncmp(argv[1], "join", 4) == 0 && (argc == 3 || argc == 4)) {
+		} else if (strncmp(argv[1], "join",
+				   4) == 0 && (argc == 3 || argc == 4)) {
 			args->prog_mode = MODE_JOIN;
 		} else {
 			return false;
