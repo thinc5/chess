@@ -15,21 +15,26 @@ typedef enum {
 	NUM_FILE_FORMATS,
 } FileFormat;
 
-FileFormat determine_file_format(ChessGame *game, FILE *file)
+const char *FILE_FORMAT_EXTENSIONS[] = {
+	[FORMAT_PGN] = "pgn"
+};
+
+FileFormat determine_file_format(const char *filepath)
 {
-	memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
-	game->input_pointer = 0;
-	char c;
-	while ((c = fgetc(file))) {
-		if (c == EOF || c == '\n') {
-			break;
-		}
-		game->input_buffer[game->input_pointer] = c;
-		game->input_pointer++;
+	// Find the last occurrence of the . character.
+	const char *ext_loc = strchr(filepath, '.');
+	if (ext_loc == NULL) {
+		return FORMAT_INVALID;
 	}
-	if (strncmp(game->input_buffer, "raw", 3) == 0) {
+
+	// Compare against suppored file extensions.
+	if (strncmp(ext_loc + 1, FILE_FORMAT_EXTENSIONS[FORMAT_RAW],
+		    strlen(FILE_FORMAT_EXTENSIONS[FORMAT_RAW]))) {
 		return FORMAT_RAW;
-	} else if (strncmp(game->input_buffer, "pgn", 3) == 0) {
+	}
+
+	if (strncmp(ext_loc + 1, FILE_FORMAT_EXTENSIONS[FORMAT_PGN],
+		    strlen(FILE_FORMAT_EXTENSIONS[FORMAT_PGN]))) {
 		return FORMAT_PGN;
 	}
 	return FORMAT_INVALID;
@@ -44,8 +49,8 @@ void replay_chess(ChessGame *game, const char *filepath)
 		return;
 	}
 
-	// Read first line and determine the read mode.
-	FileFormat format = determine_file_format(game, file);
+	// Read the extention of the file and determine what it claims to be.
+	FileFormat format = determine_file_format(filepath);
 
 	view_board(game->board, game->selected_piece, game->num_possible_moves,
 		   game->possible_moves);

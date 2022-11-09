@@ -66,8 +66,6 @@ size_t is_checkmate_for_player(Board board, PlayerColour player,
 			       size_t move_count, size_t check)
 {
 	// Locate the king of this colour.
-	// printf("Determining if the board is in a state of checkmate for player
-	// %s\n", PLAYER_COLOUR_STRINGS[player]);
 	int king = -1;
 	int checks = 0;
 	for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {

@@ -8,6 +8,7 @@
 #include "movement.h"
 
 typedef enum {
+	MODE_INVALID,
 	MODE_LOCAL,
 	MODE_REPLAY,
 	MODE_HOST,

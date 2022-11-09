@@ -17,6 +17,8 @@
 #include "pieces.h"
 #include "serialization.h"
 
+#include "log.h"
+
 const char *HELP_MESSAGE =
 	"? or help to display this message, to make a move type\n"
 	"the coordinates of the piece to move, and then the\n"
@@ -73,14 +75,14 @@ bool move_piece(ChessGame *game, Command command)
 		}
 	}
 	if (valid_move < 0) {
-		printf("NO valid move!\n");
+		INFO_LOG("NO valid move!\n");
 		return false;
 	}
 
 	process_movement(game->next_board, game->move_count,
 			 game->selected_piece,
 			 move_dest, game->check);
-	PlayPiece *selected_piece = &game->next_board[game->selected_piece];
+	PlayPiece *selected_piece = &game->board[game->selected_piece];
 
 	// Handle a promotion?
 	if (game->possible_moves[valid_move].type == MOVEMENT_PAWN_PROMOTION) {
@@ -118,19 +120,21 @@ bool move_piece(ChessGame *game, Command command)
 	if (is_checkmate_for_player(game->next_board,
 				    game->next_board[move_dest].colour,
 				    game->move_count, game->check)) {
-		printf("Checkmate, move aborted!\n");
+		INFO_LOG("Checkmate, move aborted!\n");
+		// Reset the board.
 		set_board(game->board, game->next_board);
 		return false;
 	}
 
-	// Update the real board.
+	// Write the move to the real board.
+	PlayPiece moved_piece = *selected_piece;
 	set_board(game->next_board, game->board);
 	game->move_count++;
-	printf("game count: %ld\n", game->move_count);
-	printf("Player %d (%s) has moved their %s to %c%c\n", game->turn + 1,
-	       PLAYER_COLOUR_STRINGS[game->turn],
-	       CHESS_PIECE_STRINGS[selected_piece->type], INT_TO_COORD(
-		       move_dest));
+	INFO_LOG("game count: %ld\n", game->move_count);
+	INFO_LOG("Player %d (%s) has moved their %s to %c%c\n", game->turn + 1,
+		 PLAYER_COLOUR_STRINGS[game->turn],
+		 CHESS_PIECE_STRINGS[moved_piece.type], INT_TO_COORD(
+			 move_dest));
 
 	clear_piece_selection(game);
 	view_board(game->board, game->selected_piece, game->num_possible_moves,
@@ -156,13 +160,14 @@ void play_chess(ChessGame *game)
 						     game->turn,
 						     game->move_count,
 						     game->check)) {
-				printf("Checkmate! player %d (%s) wins!\n",
-				       ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
-				       PLAYER_COLOUR_STRINGS[(game->turn + 1) %
-							     NUM_PLAYER_COLOURS]);
+				INFO_LOG("Checkmate! player %d (%s) wins!\n",
+					 ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
+					 PLAYER_COLOUR_STRINGS[(game->turn +
+								1) %
+							       NUM_PLAYER_COLOURS]);
 				break;
 			}
-			printf(
+			INFO_LOG(
 				"%s king located in check!\n",
 				PLAYER_COLOUR_STRINGS[((game->turn + 1) %
 						       NUM_PLAYER_COLOURS) +
@@ -188,31 +193,31 @@ void play_chess(ChessGame *game)
 		Command command = parse_input(game->input_buffer, game->mode);
 		switch (command) {
 		case COMMAND_SAVE:
-			printf("Saving game...\n");
+			INFO_LOG("Saving game...\n");
 			if (!serialize(game, "save.bin")) {
-				printf("Unable to save game...\n");
+				INFO_LOG("Unable to save game...\n");
 				continue;
 			}
-			printf("Game saved...\n");
+			INFO_LOG("Game saved...\n");
 			continue;
 		case COMMAND_LOAD:
-			printf("Loading game...\n");
+			INFO_LOG("Loading game...\n");
 			if (!deserialize(game, "save.bin")) {
-				printf("Unable to load game...\n");
+				INFO_LOG("Unable to load game...\n");
 				continue;
 			}
-			printf("Game loaded...\n");
+			INFO_LOG("Game loaded...\n");
 			view_board(game->board, game->selected_piece,
 				   game->num_possible_moves,
 				   game->possible_moves);
 			continue;
 		case COMMAND_FORFEIT:
-			printf("%s player forfeits, %s player wins!\n",
-			       PLAYER_COLOUR_STRINGS[game->turn + 1],
-			       PLAYER_COLOUR_STRINGS[game->turn]);
+			INFO_LOG("%s player forfeits, %s player wins!\n",
+				 PLAYER_COLOUR_STRINGS[game->turn],
+				 PLAYER_COLOUR_STRINGS[game->turn + 1]);
 			return;
 		case COMMAND_HELP:
-			printf("%s", HELP_MESSAGE);
+			INFO_LOG("%s", HELP_MESSAGE);
 			continue;
 		case COMMAND_SELECT: {
 			int selected =
@@ -237,11 +242,12 @@ void play_chess(ChessGame *game)
 			clear_piece_selection(game);
 			continue;
 		case COMMAND_MOVE:
-			move_piece(game, command);
+			if (move_piece(game, command))
+				toggle_player_turn(game);
 			continue;
 		case COMMAND_INVALID:
 		default:
-			printf("Invalid command...\n");
+			INFO_LOG("Invalid command...\n");
 			continue;
 		}
 	}
@@ -266,13 +272,14 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 						     game->turn,
 						     game->move_count,
 						     game->check)) {
-				printf("Checkmate! player %d (%s) wins!\n",
-				       ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
-				       PLAYER_COLOUR_STRINGS[(game->turn + 1) %
-							     NUM_PLAYER_COLOURS]);
+				INFO_LOG("Checkmate! player %d (%s) wins!\n",
+					 ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
+					 PLAYER_COLOUR_STRINGS[(game->turn +
+								1) %
+							       NUM_PLAYER_COLOURS]);
 				break;
 			}
-			printf(
+			INFO_LOG(
 				"%s king located in check!\n",
 				PLAYER_COLOUR_STRINGS[((game->turn + 1) %
 						       NUM_PLAYER_COLOURS) +
@@ -281,7 +288,7 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 			// check
 		} else if (!is_game_stalemate(game->board, game->turn,
 					      game->move_count)) {
-			printf("Stalemate! Game ends in draw!\n");
+			INFO_LOG("Stalemate! Game ends in draw!\n");
 			break;
 		}
 
@@ -304,39 +311,39 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 			read_line(game->input_buffer, &game->input_pointer);
 		} else {
 			// From connection (other player).
-			printf("waiting for other player's turn\n");
+			INFO_LOG("waiting for other player's turn\n");
 			game->input_pointer =
 				read_network_line(connection_fd,
 						  game->input_buffer);
 			if (game->input_pointer == 0) {
-				printf("No input from other player, error\n");
+				INFO_LOG("No input from other player, error\n");
 				return;
 			}
 			if (game->input_pointer == -1) {
-				printf("Player pipe broke, error\n");
+				INFO_LOG("Player pipe broke, error\n");
 				return;
 			}
-			printf("Other player's command: %s\n",
-			       game->input_buffer);
+			INFO_LOG("Other player's command: %s\n",
+				 game->input_buffer);
 		}
 		// See if the input was syntactically valid.
 		Command command = parse_input(game->input_buffer, game->mode);
 		switch (command) {
 		case COMMAND_SAVE:
-			printf("Saving game...\n");
+			INFO_LOG("Saving game...\n");
 			if (!serialize(game, "save.bin")) {
-				printf("Unable to save game...\n");
+				INFO_LOG("Unable to save game...\n");
 				continue;
 			}
-			printf("Game saved...\n");
+			INFO_LOG("Game saved...\n");
 			continue;
 		case COMMAND_LOAD:
-			printf("Loading game...\n");
+			INFO_LOG("Loading game...\n");
 			if (!deserialize(game, "save.bin")) {
-				printf("Unable to load game...\n");
+				INFO_LOG("Unable to load game...\n");
 				continue;
 			}
-			printf("Game loaded...\n");
+			INFO_LOG("Game loaded...\n");
 			view_board(game->board, game->selected_piece,
 				   game->num_possible_moves,
 				   game->possible_moves);
@@ -347,11 +354,11 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 						   game->input_buffer,
 						   (int)game->input_pointer);
 			}
-			printf("Player %s forfeits!\n",
-			       PLAYER_COLOUR_STRINGS[game->turn]);
+			INFO_LOG("Player %s forfeits!\n",
+				 PLAYER_COLOUR_STRINGS[game->turn]);
 			return;
 		case COMMAND_HELP:
-			printf("%s", HELP_MESSAGE);
+			INFO_LOG("%s", HELP_MESSAGE);
 			continue;
 		case COMMAND_SELECT: {
 			int selected =
@@ -390,7 +397,7 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 			continue;
 		case COMMAND_MOVE:
 			if (move_piece(game, command)) {
-				printf("Successfully moved piece!\n");
+				INFO_LOG("Successfully moved piece!\n");
 				if (game->turn == game->player) {
 					write_network_line(connection_fd,
 							   game->input_buffer,
@@ -402,7 +409,7 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 			continue;
 		case COMMAND_INVALID:
 		default:
-			printf("Invalid command...\n");
+			INFO_LOG("Invalid command...\n");
 			continue;
 		}
 	}
