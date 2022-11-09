@@ -47,14 +47,17 @@ build: $(OBJDIR) $(OBJECTS) $(OUTDIR)/$(TARGET)
 rebuild: clean
 	$(MAKE) build
 
-.PHONY:	clean format $(FORMAT_TARGETS)
+.PHONY:	clean format_clean format $(FORMAT_TARGETS)
 
 $(FORMAT_TARGETS):
 	@$(FORMATTER) -c $(FORMAT_CONFIG) -q -f $@ -o $@
 
-format: $(FORMAT_TARGETS)
+format_clean:
+	@$(RM) *.unc*
+
+format: $(FORMAT_TARGETS) format_clean
 
 clean:
 	@$(RM) $(OBJDIR)
-	@$(RM) *.unc*
+	
 	@$(RM) $(TARGET)
