@@ -10,7 +10,7 @@
 #include "log.h"
 
 const char *GAME_MODE_COMMANDS[] = {
-	[MODE_LOCAL] = "local", [MODE_REPLAY] = "run", [MODE_HOST] = "host",
+	[MODE_LOCAL] = "local", [MODE_REPLAY] = "replay", [MODE_HOST] = "host",
 	[MODE_JOIN] = "join"
 };
 
@@ -37,7 +37,7 @@ static void parse_args(ChessArgs *args, int argc, char **argv)
 	} else if ((argc == 2 || argc == 3 || argc == 4) &&
 		   strncmp(argv[1], GAME_MODE_COMMANDS[MODE_HOST],
 			   strlen(GAME_MODE_COMMANDS
-				  [MODE_HOST]))) {
+				  [MODE_HOST])) == 0) {
 		args->prog_mode = MODE_HOST;
 	} else if ((argc == 3 || argc == 4) &&
 		   strncmp(argv[1], GAME_MODE_COMMANDS[MODE_JOIN],
@@ -69,7 +69,8 @@ int main(int argc, char **argv)
 		replay_chess(&game, argv[2]);
 		break;
 	case MODE_HOST:
-		connection_fd = host_server(argv[2]);
+		// Port is optional.
+		connection_fd = host_server(argc < 3 ? NULL : argv[2]);
 		if (connection_fd == 0) {
 			return 0;
 		}
