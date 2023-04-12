@@ -12,7 +12,7 @@ const char *COMMAND_STRINGS[] = {
 	"COMMAND_INVALID", "COMMAND_HELP", "COMMAND_SAVE", "COMMAND_ANSWER",
 	"COMMAND_LOAD", "COMMAND_FORFEIT", "COMMAND_CLEAR", "COMMAND_SELECT",
 	"COMMAND_MOVE", "COMMAND_QUICK_MOVE", "COMMAND_PROMOTION",
-	"NUM_COMMANDS",
+	"COMMAND_NUM",
 };
 
 int input_to_index(char x, char y)
@@ -51,7 +51,7 @@ static inline bool valid_char_pairing(char x, char y)
  * performed here. Returns intended command or COMMAND_INVALID if the command
  * is not matched.
  */
-Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode)
+ECommand parse_input(char input_buffer[INPUT_BUFFER_SIZE], EOperationMode mode)
 {
 	// Global commands, always allowed.
 	if (strncmp(input_buffer, "quit", INPUT_BUFFER_SIZE) == 0 ||

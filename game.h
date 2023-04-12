@@ -14,19 +14,19 @@ typedef enum {
 	GAME_MODE_REPLAY,
 	GAME_MODE_HOST,
 	GAME_MODE_JOIN,
-	GAME_NUM_PROGRAM_MODES
-} GameMode;
+	GAME_NUM_MODES
+} EGameMode;
 
 typedef enum {
 	PLAYER_HUMAN,
 	PLAYER_COMPUTER,
-	NUM_PLAYER_TYPES,
-} PlayerType;
+	PLAYER_NUM_TYPES,
+} EPlayerType;
 
 typedef struct {
-	GameMode prog_mode;
-	PlayerType player1;
-	PlayerType player2;
+	EGameMode prog_mode;
+	EPlayerType player1;
+	EPlayerType player2;
 } ChessArgs;
 
 typedef struct ChessGame {
@@ -35,15 +35,15 @@ typedef struct ChessGame {
 	// The phantom next board, the "perspective board".
 	Board next_board;
 	// This player's colour.
-	PlayerColour player;
+	EPlayerColour player;
 	// Current player.
-	PlayerColour turn;
+	EPlayerColour turn;
 	// How many turns have happened in this game?
 	size_t move_count;
 	// How checkmated is this player? (How many ways are they in check.)
 	size_t check;
 	// Operation mode.
-	OperationMode mode;
+	EOperationMode mode;
 	// Selected piece, -1 for none.
 	int selected_piece;
 	// Information on the selected piece.
@@ -57,10 +57,10 @@ typedef struct ChessGame {
 void init_chess_game(ChessGame *game);
 void play_chess(ChessGame *game);
 void play_chess_networked(
-	GameMode mode, ChessGame *game, int connection_fd);
+	EGameMode mode, ChessGame *game, int connection_fd);
 void toggle_player_turn(ChessGame *game);
 bool select_piece(ChessGame *game);
 void clear_piece_selection(ChessGame *game);
-bool move_piece(ChessGame *game, Command command);
+bool move_piece(ChessGame *game, ECommand command);
 
 #endif

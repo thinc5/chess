@@ -49,7 +49,7 @@ void init_chess_game(ChessGame *game)
 
 void toggle_player_turn(ChessGame *game)
 {
-	game->turn = (game->turn + 1) % NUM_PLAYER_COLOURS;
+	game->turn = (game->turn + 1) % PLAYER_NUM_COLOURS;
 }
 
 bool select_piece(ChessGame *game)
@@ -78,7 +78,7 @@ void clear_piece_selection(ChessGame *game)
 	game->mode = OPERATION_SELECT;
 }
 
-bool move_piece(ChessGame *game, Command command)
+bool move_piece(ChessGame *game, ECommand command)
 {
 	int move_dest = input_to_index(game->input_buffer[0],
 				       game->input_buffer[1]);
@@ -111,7 +111,7 @@ bool move_piece(ChessGame *game, Command command)
 	if (selected_move.type == MOVEMENT_PAWN_PROMOTION) {
 		// Special input mode to capture user promotion input.
 		game->mode = OPERATION_PROMOTION;
-		Command promotion_result = COMMAND_INVALID;
+		ECommand promotion_result = COMMAND_INVALID;
 
 		// Piece to modify on successful promotion.
 		PlayPiece *promoted_piece = &game->next_board[move_dest];
@@ -176,7 +176,7 @@ bool move_piece(ChessGame *game, Command command)
 				game->selected_piece), INT_TO_COORD(
 				move_dest),
 			PLAYER_COLOUR_STRINGS[(game->turn + 1) %
-					      NUM_PLAYER_COLOURS ],
+					      PLAYER_NUM_COLOURS ],
 			PIECE_SYMBOLS[target_piece.colour][target_piece.type]);
 		break;
 	case MOVEMENT_PAWN_PROMOTION:
@@ -224,20 +224,20 @@ void play_chess(ChessGame *game)
 						     game->move_count,
 						     game->check)) {
 				INFO_LOG("Checkmate! player %d (%s) wins!\n",
-					 ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
+					 ((game->turn + 1) % PLAYER_NUM_COLOURS) + 1,
 					 PLAYER_COLOUR_STRINGS[(game->turn +
 								1) %
-							       NUM_PLAYER_COLOURS]);
+							       PLAYER_NUM_COLOURS]);
 				break;
 			}
 			INFO_LOG(
 				"%s king in check!\n",
 				PLAYER_COLOUR_STRINGS[(game->turn) %
-						      NUM_PLAYER_COLOURS]);
+						      PLAYER_NUM_COLOURS]);
 		}
 
 		// Show the selected piece if we have one.
-		ChessPiece type = game->selected_piece == -1
+		EChessPiece type = game->selected_piece == -1
 			  ? PIECE_NONE
 			  : game->board[game->selected_piece].type;
 		show_possible_moves(game->selected_piece, type,
@@ -252,7 +252,7 @@ void play_chess(ChessGame *game)
 		// Read a new line.
 		read_line(game->input_buffer, &game->input_pointer);
 		// See if the input was syntactically valid.
-		Command command = parse_input(game->input_buffer, game->mode);
+		ECommand command = parse_input(game->input_buffer, game->mode);
 		switch (command) {
 		case COMMAND_SAVE:
 			INFO_LOG("Saving game...\n");
@@ -277,7 +277,7 @@ void play_chess(ChessGame *game)
 			INFO_LOG("%s player forfeits, %s player wins!\n",
 				 PLAYER_COLOUR_STRINGS[game->turn],
 				 PLAYER_COLOUR_STRINGS[(game->turn + 1) %
-						       NUM_PLAYER_COLOURS]);
+						       PLAYER_NUM_COLOURS]);
 			return;
 		case COMMAND_HELP:
 			INFO_LOG("%s", HELP_MESSAGE);
@@ -325,7 +325,7 @@ void play_chess(ChessGame *game)
 	}
 }
 
-void play_chess_networked(GameMode mode, ChessGame *game,
+void play_chess_networked(EGameMode mode, ChessGame *game,
 			  int connection_fd)
 {
 	// Play the game of chess!
@@ -345,16 +345,16 @@ void play_chess_networked(GameMode mode, ChessGame *game,
 						     game->move_count,
 						     game->check)) {
 				INFO_LOG("Checkmate! player %d (%s) wins!\n",
-					 ((game->turn + 1) % NUM_PLAYER_COLOURS) + 1,
+					 ((game->turn + 1) % PLAYER_NUM_COLOURS) + 1,
 					 PLAYER_COLOUR_STRINGS[(game->turn +
 								1) %
-							       NUM_PLAYER_COLOURS]);
+							       PLAYER_NUM_COLOURS]);
 				break;
 			}
 			INFO_LOG(
 				"%s king in check!\n",
 				PLAYER_COLOUR_STRINGS[(game->turn) %
-						      NUM_PLAYER_COLOURS]);
+						      PLAYER_NUM_COLOURS]);
 			// Check if the game is in stalemate since it is not in
 			// check
 		} else if (!is_game_stalemate(game->board, game->turn,
@@ -364,7 +364,7 @@ void play_chess_networked(GameMode mode, ChessGame *game,
 		}
 
 		// Show the selected piece if we have one.
-		ChessPiece type = game->selected_piece == -1
+		EChessPiece type = game->selected_piece == -1
 			  ? PIECE_NONE
 			  : game->board[game->selected_piece].type;
 		show_possible_moves(game->selected_piece, type,
@@ -398,7 +398,7 @@ void play_chess_networked(GameMode mode, ChessGame *game,
 				 game->input_buffer);
 		}
 		// See if the input was syntactically valid.
-		Command command = parse_input(game->input_buffer, game->mode);
+		ECommand command = parse_input(game->input_buffer, game->mode);
 		switch (command) {
 		case COMMAND_SAVE:
 			INFO_LOG("Saving game...\n");

@@ -12,7 +12,7 @@
 // Qa6xb7# fxg1=Q+
 #define MAX_SAN_MOVE_LEN 15
 
-ChessPiece san_sym_to_piece(char sym)
+EChessPiece san_sym_to_piece(char sym)
 {
 	switch (sym) {
 	case 'K':
@@ -96,7 +96,7 @@ bool read_san_moves(FILE *file, SanData *data)
 			}
 
 			// Are we seeing a piece?
-			ChessPiece piece = san_sym_to_piece(current);
+			EChessPiece piece = san_sym_to_piece(current);
 			if (piece != PIECE_NONE && san->piece == PIECE_PAWN) {
 				san->piece = piece;
 				continue;
@@ -134,7 +134,7 @@ bool read_san_moves(FILE *file, SanData *data)
 			// Promotion?
 			if (current == '=') {
 				current = fgetc(file);
-				ChessPiece piece = san_sym_to_piece(current);
+				EChessPiece piece = san_sym_to_piece(current);
 				if (piece == PIECE_NONE) {
 					// Throw error
 				}

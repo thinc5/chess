@@ -3,13 +3,13 @@
 
 #include <stdlib.h>
 
-const char *MOVEMENT_TYPE_STRINGS[NUM_MOVEMENT_TYPES] = {
+const char *MOVEMENT_TYPE_STRINGS[MOVEMENT_NUM_TYPES] = {
 	"MOVEMENT_ILLEGAL", "MOVEMENT_NORMAL", "MOVEMENT_PIECE_CAPTURE",
 	"MOVEMENT_PAWN_LONG_JUMP", "MOVEMENT_PAWN_EN_PASSANT",
 	"MOVEMENT_PAWN_PROMOTION", "MOVEMENT_KING_CASTLE",
 };
 
-const char *MOVEMENT_DIRECTION_STRINGS[NUM_DIRECTIONS] = {
+const char *MOVEMENT_DIRECTION_STRINGS[DIRECTION_NUM_DIRECTIONS] = {
 	[DIRECTION_NONE] = "DIRECTION_NONE",
 	[DIRECTION_NORTH] = "DIRECTION_NORTH",
 	[DIRECTION_EAST] = "DIRECTION_EAST",
@@ -21,7 +21,7 @@ const char *MOVEMENT_DIRECTION_STRINGS[NUM_DIRECTIONS] = {
 	[DIRECTION_NORTH_WEST] = "DIRECTION_NORTH_WEST",
 };
 
-// static const int MOVE_DIRECTION_VALUES[NUM_DIRECTIONS] = {
+// static const int MOVE_DIRECTION_VALUES[DIRECTION_NUM_DIRECTIONS] = {
 //     [DIRECTION_NONE]        = 0x00,
 //     [DIRECTION_NORTH]       = 0x01,
 //     [DIRECTION_EAST]        = 0x02,
@@ -33,16 +33,16 @@ const char *MOVEMENT_DIRECTION_STRINGS[NUM_DIRECTIONS] = {
 //     [DIRECTION_NORTH_WEST]  = 0x01 | 0x08
 // };
 
-MovementDirection
+EMovementDirection
 get_movement_direction(size_t start_x, size_t start_y, size_t dest_x,
 		       size_t dest_y)
 {
 	int x_dist = dest_x - start_x;
 	int y_dist = dest_y - start_y;
 
-	MovementDirection x_dir = x_dist == 0 ? DIRECTION_NONE
+	EMovementDirection x_dir = x_dist == 0 ? DIRECTION_NONE
 	  : (x_dist > 0 ? DIRECTION_EAST : DIRECTION_WEST);
-	MovementDirection y_dir =
+	EMovementDirection y_dir =
 		y_dist == 0
 	  ? DIRECTION_NONE
 	  : (y_dist > 0 ? DIRECTION_NORTH : DIRECTION_SOUTH);

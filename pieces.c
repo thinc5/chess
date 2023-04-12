@@ -2,7 +2,7 @@
 
 #include "pieces.h"
 
-const size_t STARTING_SIZES[NUM_CHESS_PIECES] = {
+const size_t STARTING_SIZES[PIECE_NUM_PIECES] = {
 	[PIECE_NONE] = 0, [PIECE_PAWN] = 8, [PIECE_KNIGHT] = 2,
 	[PIECE_ROOK] = 2,
 	[PIECE_BISHOP] = 2, [PIECE_QUEEN] = 1, [PIECE_KING] = 1,

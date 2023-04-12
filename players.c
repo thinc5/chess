@@ -1,11 +1,11 @@
 #include "players.h"
 
-const char *PLAYER_COLOUR_STRINGS[NUM_PLAYER_COLOURS] = {
+const char *PLAYER_COLOUR_STRINGS[PLAYER_NUM_COLOURS] = {
 	[COLOUR_WHITE] = "white",
 	[COLOUR_BLACK] = "black",
 };
 
-const char *PIECE_SYMBOLS[NUM_PLAYER_COLOURS][NUM_CHESS_PIECES] = {
+const char *PIECE_SYMBOLS[PLAYER_NUM_COLOURS][PIECE_NUM_PIECES] = {
 	[COLOUR_WHITE] =
 	{
 		[PIECE_NONE] = " ",

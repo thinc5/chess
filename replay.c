@@ -25,15 +25,15 @@ typedef enum {
 	FORMAT_INVALID,
 	FORMAT_RAW,
 	FORMAT_PGN,
-	NUM_FILE_FORMATS,
-} FileFormat;
+	FORMAT_NUM_FILE_FORMATS,
+} EFileFormat;
 
 const char *FILE_FORMAT_EXTENSIONS[] = {
 	[FORMAT_RAW] = "raw",
 	[FORMAT_PGN] = "pgn"
 };
 
-FileFormat determine_file_format(const char *filepath)
+EFileFormat determine_file_format(const char *filepath)
 {
 	// Warning: this function is lazy and assumes that all files have an
 	// 'extention', and that they are what they say they are.
@@ -55,7 +55,7 @@ FileFormat determine_file_format(const char *filepath)
 	}
 
 	// Compare against suppored file extensions.
-	for (FileFormat format = FORMAT_RAW; format < NUM_FILE_FORMATS;
+	for (EFileFormat format = FORMAT_RAW; format < FORMAT_NUM_FILE_FORMATS;
 	     format++) {
 		if (strncmp(ext_loc, FILE_FORMAT_EXTENSIONS[format],
 			    strlen(FILE_FORMAT_EXTENSIONS[format])) == 0)
@@ -91,7 +91,7 @@ int read_line_from_file(FILE *file, char *input_buffer,
 	}
 }
 
-REPLAY_INPUT read_next_move_raw(FILE *file, ChessGame *game, char *input_buffer,
+EReplayInput read_next_move_raw(FILE *file, ChessGame *game, char *input_buffer,
 				size_t *input_pointer)
 {
 	int result = read_line_from_file(file, input_buffer, input_pointer);
@@ -116,7 +116,7 @@ REPLAY_INPUT read_next_move_raw(FILE *file, ChessGame *game, char *input_buffer,
 	return REPLAY_INPUT_INVALID;
 }
 
-REPLAY_INPUT (*READ_NEXT_MOVE[])(FILE *file, ChessGame *game,
+EReplayInput (*READ_NEXT_MOVE[])(FILE *file, ChessGame *game,
 				 char *input_buffer,
 				 size_t *input_pointer) = {
 	[FORMAT_RAW] = &read_next_move_raw,
@@ -127,7 +127,7 @@ void replay_chess(ChessGame *game, const char *filepath)
 {
 	INFO_LOG("Attempting to replay: %s\n", filepath);
 	// Read the extention of the file and determine what it claims to be.
-	FileFormat format = determine_file_format(filepath);
+	EFileFormat format = determine_file_format(filepath);
 
 	// Does file exist?
 	FILE *file = fopen(filepath, "r");
@@ -155,10 +155,10 @@ void replay_chess(ChessGame *game, const char *filepath)
 			printf("Checkmate! player %d (%s) wins "
 			       "with %ld moves!\n",
 			       ((game->turn + 1) %
-				NUM_PLAYER_COLOURS) + 1,
+				PLAYER_NUM_COLOURS) + 1,
 			       PLAYER_COLOUR_STRINGS[(game->turn
 						      + 1) %
-						     NUM_PLAYER_COLOURS],
+						     PLAYER_NUM_COLOURS],
 			       game->move_count);
 			break;
 		} else if (game->check) {
@@ -171,7 +171,7 @@ void replay_chess(ChessGame *game, const char *filepath)
 		memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
 		game->input_pointer = 0;
 
-		REPLAY_INPUT move_result =
+		EReplayInput move_result =
 			READ_NEXT_MOVE[format](file, game,
 					       game->input_buffer,
 					       &game->input_pointer);
@@ -195,19 +195,19 @@ void replay_chess(ChessGame *game, const char *filepath)
 			return;
 		case REPLAY_INPUT_WIN_WHITE:
 		case REPLAY_INPUT_WIN_BLACK: {
-			PlayerColour winner = move_result ==
-					      REPLAY_INPUT_WIN_WHITE ?
-					      COLOUR_WHITE :
-					      COLOUR_BLACK;
+			EPlayerColour winner = move_result ==
+					       REPLAY_INPUT_WIN_WHITE ?
+					       COLOUR_WHITE :
+					       COLOUR_BLACK;
 			if (game_over) {
 				printf("Player %d (%s) won!\n", winner + 1,
 				       PLAYER_COLOUR_STRINGS[winner]);
 			} else {
 				printf(
 					"Player %d (%s) forfeited, Player %d %s won!\n",
-					(winner + 1) % NUM_PLAYER_COLOURS,
+					(winner + 1) % PLAYER_NUM_COLOURS,
 					PLAYER_COLOUR_STRINGS[(winner + 1) %
-							      NUM_PLAYER_COLOURS],
+							      PLAYER_NUM_COLOURS],
 					winner + 1,
 					PLAYER_COLOUR_STRINGS[winner]);
 			}
@@ -228,7 +228,7 @@ void replay_chess(ChessGame *game, const char *filepath)
 		}
 
 		// The parser should have written the next move to the input buffer.
-		Command command = parse_input(game->input_buffer, game->mode);
+		ECommand command = parse_input(game->input_buffer, game->mode);
 		// DEBUG_LOG("Selected command: %s\n", COMMAND_STRINGS[command]);
 		switch (command) {
 		case COMMAND_MOVE:

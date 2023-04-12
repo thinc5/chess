@@ -11,13 +11,13 @@
  * Process the piece's movement at a basic level without any input from the
  * user.
  */
-MovementType process_movement(Board board, size_t move_count, int selected,
-			      int dest, size_t check)
+EMovementType process_movement(Board board, size_t move_count, int selected,
+			       int dest, size_t check)
 {
 	// Check this piece's movement rules.
 	PlayPiece *selected_piece = &board[selected];
-	PlayerColour colour = selected_piece->colour;
-	MovementType movement = PIECE_MOVEMENT_ALGORITHM[selected_piece->type](
+	EPlayerColour colour = selected_piece->colour;
+	EMovementType movement = PIECE_MOVEMENT_ALGORITHM[selected_piece->type](
 		board, selected, dest, move_count, check);
 	// printf("Movement result: %s\n", MOVEMENT_TYPE_STRINGS[movement]);
 
@@ -71,7 +71,7 @@ MovementType process_movement(Board board, size_t move_count, int selected,
 /**
  * Is this player in checkmate?
  */
-size_t is_checkmate_for_player(Board board, PlayerColour player,
+size_t is_checkmate_for_player(Board board, EPlayerColour player,
 			       size_t move_count, size_t check)
 {
 	// Locate the king of this colour.
@@ -126,7 +126,7 @@ size_t is_checkmate_for_player(Board board, PlayerColour player,
 /**
  * Is the game in a stalemate? Can this player make even one move?
  */
-size_t is_game_stalemate(Board board, PlayerColour player, size_t move_count)
+size_t is_game_stalemate(Board board, EPlayerColour player, size_t move_count)
 {
 	size_t possible = 0;
 	for (int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
@@ -146,7 +146,7 @@ size_t is_game_stalemate(Board board, PlayerColour player, size_t move_count)
  * Check if this player can make any more moves.
  */
 size_t is_game_over_for_player(Board board, Board next_board,
-			       PlayerColour player, size_t move_count,
+			       EPlayerColour player, size_t move_count,
 			       size_t check)
 {
 	size_t breakable = 0;

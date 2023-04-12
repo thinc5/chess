@@ -12,10 +12,10 @@ typedef enum {
 	PIECE_BISHOP,
 	PIECE_QUEEN,
 	PIECE_KING,
-	NUM_CHESS_PIECES,
-} ChessPiece;
+	PIECE_NUM_PIECES,
+} EChessPiece;
 
-extern const size_t STARTING_SIZES[NUM_CHESS_PIECES];
-extern const char *CHESS_PIECE_STRINGS[NUM_CHESS_PIECES];
+extern const size_t STARTING_SIZES[PIECE_NUM_PIECES];
+extern const char *CHESS_PIECE_STRINGS[PIECE_NUM_PIECES];
 
 #endif

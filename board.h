@@ -6,8 +6,8 @@
 #define BOARD_SIZE 8
 
 typedef struct {
-	ChessPiece type;
-	PlayerColour colour;
+	EChessPiece type;
+	EPlayerColour colour;
 	size_t moves;
 	size_t last_move;
 } PlayPiece;

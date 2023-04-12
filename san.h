@@ -3,13 +3,16 @@
 
 #include "pieces.h"
 
+#include <stdbool.h>
+#include <stdio.h>
+
 typedef struct {
 	size_t colour;
-	ChessPiece piece;
+	EChessPiece piece;
 	int origin[2];
 	int destination[2];
 	size_t capture;
-	ChessPiece promotion;
+	EChessPiece promotion;
 	size_t check;
 	size_t checkmate;
 	size_t castle;

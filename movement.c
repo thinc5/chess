@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const MovementType (*PIECE_MOVEMENT_ALGORITHM[NUM_CHESS_PIECES])(
+const EMovementType (*PIECE_MOVEMENT_ALGORITHM[PIECE_NUM_PIECES])(
 	Board board, int start, int target, size_t move_count, size_t check) = {
 	[PIECE_NONE] = &none_movement_algorithm,
 	[PIECE_PAWN] = &pawn_movement_algorithm,
@@ -17,7 +17,7 @@ const MovementType (*PIECE_MOVEMENT_ALGORITHM[NUM_CHESS_PIECES])(
 	[PIECE_KING] = &king_movement_algorithm,
 };
 
-static const int POSSIBLE_MOVES[NUM_CHESS_PIECES + 1][11][2] = {
+static const int POSSIBLE_MOVES[PIECE_NUM_PIECES + 1][11][2] = {
 	[PIECE_NONE] = { { 0 } },
 	// Include both pawn's possible moves.
 	[PIECE_PAWN] =
@@ -44,23 +44,23 @@ static const int POSSIBLE_MOVES[NUM_CHESS_PIECES + 1][11][2] = {
 			 { -1, -1 },
 			 { -1, 0 },
 			 { -2, 0 } },
-	[NUM_CHESS_PIECES] = { { 0 } }
+	[PIECE_NUM_PIECES] = { { 0 } }
 };
 
-static const int POSSIBLE_MOVE_NUMS[NUM_CHESS_PIECES] = {
+static const int POSSIBLE_MOVE_NUMS[PIECE_NUM_PIECES] = {
 	[PIECE_NONE] = 0, [PIECE_PAWN] = 8, [PIECE_KNIGHT] = 8,
 	[PIECE_ROOK] = 0,
 	[PIECE_BISHOP] = 0, [PIECE_QUEEN] = 0, [PIECE_KING] = 10
 };
 
 // Useful checks.
-static inline bool moving_forward(PlayerColour colour, int start_y,
+static inline bool moving_forward(EPlayerColour colour, int start_y,
 				  int target_y)
 {
 	return(colour ? start_y > target_y : start_y < target_y);
 }
 
-static inline bool end_row(PlayerColour colour, int y)
+static inline bool end_row(EPlayerColour colour, int y)
 {
 	return y == (colour == COLOUR_WHITE ? BOARD_SIZE - 1 : 0);
 }
@@ -144,14 +144,14 @@ static bool diagonal_movement(Board board, MoveStats *stats)
 }
 
 // Movement algorithms.
-MovementType none_movement_algorithm(Board board, int start, int target,
-				     size_t move_count, size_t check)
+EMovementType none_movement_algorithm(Board board, int start, int target,
+				      size_t move_count, size_t check)
 {
 	return MOVEMENT_ILLEGAL;
 }
 
-MovementType pawn_movement_algorithm(Board board, int start, int target,
-				     size_t move_count, size_t check)
+EMovementType pawn_movement_algorithm(Board board, int start, int target,
+				      size_t move_count, size_t check)
 {
 	if (!can_move(board, start, target)) {
 		return MOVEMENT_ILLEGAL;
@@ -220,8 +220,8 @@ MovementType pawn_movement_algorithm(Board board, int start, int target,
 	}
 }
 
-MovementType knight_movement_algorithm(Board board, int start, int target,
-				       size_t move_count, size_t check)
+EMovementType knight_movement_algorithm(Board board, int start, int target,
+					size_t move_count, size_t check)
 {
 	if (!can_move(board, start, target))
 		return MOVEMENT_ILLEGAL;
@@ -235,8 +235,8 @@ MovementType knight_movement_algorithm(Board board, int start, int target,
 	return MOVEMENT_NORMAL;
 }
 
-MovementType rook_movement_algorithm(Board board, int start, int target,
-				     size_t move_count, size_t check)
+EMovementType rook_movement_algorithm(Board board, int start, int target,
+				      size_t move_count, size_t check)
 {
 	if (!can_move(board, start, target))
 		return MOVEMENT_ILLEGAL;
@@ -250,8 +250,8 @@ MovementType rook_movement_algorithm(Board board, int start, int target,
 	return MOVEMENT_NORMAL;
 }
 
-MovementType bishop_movement_algorithm(Board board, int start, int target,
-				       size_t move_count, size_t check)
+EMovementType bishop_movement_algorithm(Board board, int start, int target,
+					size_t move_count, size_t check)
 {
 	if (!can_move(board, start, target))
 		return MOVEMENT_ILLEGAL;
@@ -266,8 +266,8 @@ MovementType bishop_movement_algorithm(Board board, int start, int target,
 	return MOVEMENT_NORMAL;
 }
 
-MovementType queen_movement_algorithm(Board board, int start, int target,
-				      size_t move_count, size_t check)
+EMovementType queen_movement_algorithm(Board board, int start, int target,
+				       size_t move_count, size_t check)
 {
 	if (!can_move(board, start, target))
 		return MOVEMENT_ILLEGAL;
@@ -280,8 +280,8 @@ MovementType queen_movement_algorithm(Board board, int start, int target,
 	return MOVEMENT_NORMAL;
 }
 
-MovementType king_movement_algorithm(Board board, int start, int target,
-				     size_t move_count, size_t check)
+EMovementType king_movement_algorithm(Board board, int start, int target,
+				      size_t move_count, size_t check)
 {
 	MoveStats stats = get_move_stats(start, target);
 	PlayPiece *king = &board[start];
@@ -361,7 +361,7 @@ static void traverse_board(Board board, int location, size_t *possible,
 			break;
 
 		int step_loc = (new_y * BOARD_SIZE) + new_x;
-		MovementType type =
+		EMovementType type =
 			PIECE_MOVEMENT_ALGORITHM[board[location].type](
 				board, location, step_loc, move_count, check);
 
@@ -451,7 +451,7 @@ static void possible_movements(Board board, int location, size_t *possible,
 			       ]) +
 			      (POSSIBLE_MOVES[board[location].type][i][1
 			       ] * BOARD_SIZE);
-		MovementType type =
+		EMovementType type =
 			PIECE_MOVEMENT_ALGORITHM[board[location].type](
 				board, location, new_loc, move_count,
 				check);

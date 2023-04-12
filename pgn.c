@@ -80,7 +80,7 @@ void determine_origin(SanData *san_data, ChessGame *game)
 	}
 }
 
-REPLAY_INPUT read_pgn_move(FILE *file, ChessGame *game,
+EReplayInput read_pgn_move(FILE *file, ChessGame *game,
 			   char *input_buffer,
 			   size_t *input_pointer)
 {
@@ -114,9 +114,9 @@ REPLAY_INPUT read_pgn_move(FILE *file, ChessGame *game,
 		if (move_number_len == 1) {
 			// Game is over and we have a result.
 			if (current == '-') {
-				PlayerColour won = move_number[0] ==
-						   '0' ? COLOUR_WHITE :
-						   COLOUR_BLACK;
+				EPlayerColour won = move_number[0] ==
+						    '0' ? COLOUR_WHITE :
+						    COLOUR_BLACK;
 				// DEBUG_LOG("REPLAY: GAME OVER, WINNER: %s\n",
 				// 	 PLAYER_COLOUR_STRINGS[won]);
 				return won ==
@@ -154,7 +154,7 @@ REPLAY_INPUT read_pgn_move(FILE *file, ChessGame *game,
 	return REPLAY_INPUT_COORDS;
 }
 
-REPLAY_INPUT parse_pgn_input(FILE *file, ChessGame *game, char *input_buffer,
+EReplayInput parse_pgn_input(FILE *file, ChessGame *game, char *input_buffer,
 			     size_t *input_pointer)
 {
 	// Read the first character to determine if we are dealing with a comment
@@ -174,7 +174,7 @@ REPLAY_INPUT parse_pgn_input(FILE *file, ChessGame *game, char *input_buffer,
 	return read_pgn_move(file, game, input_buffer, input_pointer);
 }
 
-REPLAY_INPUT read_next_move_pgn(FILE *file, ChessGame *game,
+EReplayInput read_next_move_pgn(FILE *file, ChessGame *game,
 				char *input_buffer,
 				size_t *input_pointer)
 {

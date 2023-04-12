@@ -82,10 +82,10 @@ int serialize_text(ChessGame *game, FILE *file)
 
 static bool identify_piece_sym(const char *str, PlayPiece *piece)
 {
-	for (PlayerColour colour = COLOUR_WHITE; colour < NUM_PLAYER_COLOURS;
+	for (EPlayerColour colour = COLOUR_WHITE; colour < PLAYER_NUM_COLOURS;
 	     colour++) {
-		for (ChessPiece pieceType = PIECE_NONE;
-		     pieceType < NUM_CHESS_PIECES; pieceType++) {
+		for (EChessPiece pieceType = PIECE_NONE;
+		     pieceType < PIECE_NUM_PIECES; pieceType++) {
 			if (strcmp(str,
 				   PIECE_SYMBOLS[colour][pieceType]) == 0) {
 				*piece =

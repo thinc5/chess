@@ -10,8 +10,8 @@ typedef enum {
 	OPERATION_MOVE,
 	OPERATION_QUESTION,
 	OPERATION_PROMOTION,
-	NUM_OPERATION_MODES
-} OperationMode;
+	OPERATION_NUM_MODES
+} EOperationMode;
 
 typedef enum {
 	COMMAND_INVALID,
@@ -25,13 +25,13 @@ typedef enum {
 	COMMAND_MOVE,
 	COMMAND_QUICK_MOVE,
 	COMMAND_PROMOTION,
-	NUM_COMMANDS,
-} Command;
+	COMMAND_NUM_COMMANDS,
+} ECommand;
 
 extern const char *COMMAND_STRINGS[];
 
 int input_to_index(char x, char y);
 void read_line(char *input_buffer, size_t *input_pointer);
-Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode);
+ECommand parse_input(char input_buffer[INPUT_BUFFER_SIZE], EOperationMode mode);
 
 #endif

@@ -11,8 +11,8 @@ typedef enum {
 	MOVEMENT_PAWN_EN_PASSANT,
 	MOVEMENT_PAWN_PROMOTION,
 	MOVEMENT_KING_CASTLE,
-	NUM_MOVEMENT_TYPES
-} MovementType;
+	MOVEMENT_NUM_TYPES
+} EMovementType;
 
 typedef enum {
 	DIRECTION_NONE,
@@ -24,8 +24,8 @@ typedef enum {
 	DIRECTION_SOUTH_EAST,
 	DIRECTION_SOUTH_WEST,
 	DIRECTION_NORTH_WEST,
-	NUM_DIRECTIONS
-} MovementDirection;
+	DIRECTION_NUM_DIRECTIONS
+} EMovementDirection;
 
 typedef struct {
 	size_t start_x;
@@ -34,12 +34,12 @@ typedef struct {
 	size_t start_y;
 	size_t target_y;
 	size_t dist_y;
-	MovementDirection direction;
+	EMovementDirection direction;
 } MoveStats;
 
-extern const char *MOVEMENT_TYPE_STRINGS[NUM_MOVEMENT_TYPES];
+extern const char *MOVEMENT_TYPE_STRINGS[MOVEMENT_NUM_TYPES];
 
-MovementDirection
+EMovementDirection
 get_movement_direction(size_t start_x, size_t start_y, size_t target_x, size_t target_y);
 
 MoveStats get_move_stats(size_t start, size_t target);
