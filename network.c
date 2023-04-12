@@ -1,4 +1,6 @@
 #include "network.h"
+#include "log.h"
+#include "input.h"
 
 #include <netdb.h>
 #include <stdio.h>
@@ -6,8 +8,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "log.h"
-#include "input.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/fcntl.h>

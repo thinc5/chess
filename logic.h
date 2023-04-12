@@ -2,6 +2,7 @@
 #define _LOGIC_H
 
 #include "board.h"
+#include "movement_stats.h"
 #include "movement.h"
 
 MovementType process_movement(

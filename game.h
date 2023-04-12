@@ -1,20 +1,21 @@
 #ifndef _GAME_H
 #define _GAME_H
 
-#include <stdbool.h>
-
 #include "board.h"
 #include "input.h"
 #include "movement.h"
 
+#include <stdbool.h>
+
 typedef enum {
-	MODE_INVALID,
-	MODE_LOCAL,
-	MODE_REPLAY,
-	MODE_HOST,
-	MODE_JOIN,
-	NUM_PROGRAM_MODES
-} ProgramMode;
+	GAME_MODE_INVALID,
+	GAME_MODE_LOAD,
+	GAME_MODE_LOCAL,
+	GAME_MODE_REPLAY,
+	GAME_MODE_HOST,
+	GAME_MODE_JOIN,
+	GAME_NUM_PROGRAM_MODES
+} GameMode;
 
 typedef enum {
 	PLAYER_HUMAN,
@@ -23,7 +24,7 @@ typedef enum {
 } PlayerType;
 
 typedef struct {
-	ProgramMode prog_mode;
+	GameMode prog_mode;
 	PlayerType player1;
 	PlayerType player2;
 } ChessArgs;
@@ -56,7 +57,10 @@ typedef struct ChessGame {
 void init_chess_game(ChessGame *game);
 void play_chess(ChessGame *game);
 void play_chess_networked(
-	ProgramMode mode, ChessGame *game, int connection_fd);
+	GameMode mode, ChessGame *game, int connection_fd);
+void toggle_player_turn(ChessGame *game);
+bool select_piece(ChessGame *game);
+void clear_piece_selection(ChessGame *game);
 bool move_piece(ChessGame *game, Command command);
 
 #endif

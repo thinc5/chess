@@ -1,4 +1,13 @@
 #include "game.h"
+#include "board.h"
+#include "display.h"
+#include "input.h"
+#include "logic.h"
+#include "movement.h"
+#include "network.h"
+#include "pieces.h"
+#include "serialization.h"
+#include "log.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -8,31 +17,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "board.h"
-#include "display.h"
-#include "input.h"
-#include "logic.h"
-#include "movement.h"
-#include "network.h"
-#include "pieces.h"
-#include "serialization.h"
-
-#include "log.h"
-
 const char *HELP_MESSAGE =
-	"? or help to display this message, to make a move type\n"
-	"the coordinates of the piece to move, and then the\n"
-	"target coordinates, e.g A1 A3. To FORFEITor quit enter\n"
-	"ff or quit.\n";
-
-void clear_piece_selection(ChessGame *game)
-{
-	game->selected_piece = -1;
-	game->num_possible_moves = 0;
-	memset(game->possible_moves, 0,
-	       sizeof(PossibleMove) * MAX_POSSIBLE_MOVES);
-	game->mode = OPERATION_SELECT;
-}
+	"'?' or 'help' to display this message, to make a move type\n"
+	"the coordinates of the piece to move, and then the target\n"
+	"coordinates, e.g 'A1' 'A3'. To forfeit or quit enter 'ff'\n"
+	"or 'quit'.\n";
 
 void clear_input_buffer(ChessGame *game)
 {
@@ -63,52 +52,91 @@ void toggle_player_turn(ChessGame *game)
 	game->turn = (game->turn + 1) % NUM_PLAYER_COLOURS;
 }
 
+bool select_piece(ChessGame *game)
+{
+	int selected =
+		input_to_index(game->input_buffer[0],
+			       game->input_buffer[1]);
+	if (game->board[selected].type == PIECE_NONE ||
+	    game->board[selected].colour != game->turn) {
+		return false;
+	}
+	game->selected_piece = selected;
+	game->num_possible_moves = get_possible_moves_for_piece(
+		game->board, game->selected_piece,
+		game->possible_moves,
+		game->move_count, game->check);
+	return true;
+}
+
+void clear_piece_selection(ChessGame *game)
+{
+	game->selected_piece = -1;
+	game->num_possible_moves = 0;
+	memset(game->possible_moves, 0,
+	       sizeof(PossibleMove) * MAX_POSSIBLE_MOVES);
+	game->mode = OPERATION_SELECT;
+}
+
 bool move_piece(ChessGame *game, Command command)
 {
 	int move_dest = input_to_index(game->input_buffer[0],
 				       game->input_buffer[1]);
-	int valid_move = -1;
+
+	// Copy of piece we selected before we modify the board.
+	PlayPiece selected_piece = game->board[game->selected_piece];
+
+	// Copy of target piece before we modify the board.
+	PlayPiece target_piece = game->board[move_dest];
+	int valid_move_index = -1;
 	for (size_t i = 0; i < game->num_possible_moves; i++) {
 		if (move_dest == game->possible_moves[i].target) {
-			valid_move = i;
+			valid_move_index = i;
 			break;
 		}
 	}
-	if (valid_move < 0) {
-		INFO_LOG("NO valid move!\n");
+	if (valid_move_index < 0) {
+		INFO_LOG("No valid move for the selected piece!\n");
 		return false;
 	}
 
+	PossibleMove selected_move = game->possible_moves[valid_move_index];
+
+	// Process the movement.
 	process_movement(game->next_board, game->move_count,
 			 game->selected_piece,
 			 move_dest, game->check);
-	PlayPiece *selected_piece = &game->board[game->selected_piece];
 
 	// Handle a promotion?
-	if (game->possible_moves[valid_move].type == MOVEMENT_PAWN_PROMOTION) {
+	if (selected_move.type == MOVEMENT_PAWN_PROMOTION) {
+		// Special input mode to capture user promotion input.
 		game->mode = OPERATION_PROMOTION;
-		Command promotion = COMMAND_INVALID;
-		while (promotion != COMMAND_PROMOTION) {
+		Command promotion_result = COMMAND_INVALID;
+
+		// Piece to modify on successful promotion.
+		PlayPiece *promoted_piece = &game->next_board[move_dest];
+		while (promotion_result != COMMAND_PROMOTION) {
 			show_promotion_prompt(game->turn, move_dest);
 			// Reset the buffer.
 			memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
 			game->input_pointer = 0;
 			// Read a new line.
 			read_line(game->input_buffer, &game->input_pointer);
-			promotion = parse_input(game->input_buffer, game->mode);
+			promotion_result = parse_input(game->input_buffer,
+						       game->mode);
 		}
 		switch (tolower(game->input_buffer[0])) {
 		case 'q':
-			selected_piece->type = PIECE_QUEEN;
+			promoted_piece->type = PIECE_QUEEN;
 			break;
-		case 'k':
-			selected_piece->type = PIECE_KNIGHT;
+		case 'n':
+			promoted_piece->type = PIECE_KNIGHT;
 			break;
 		case 'r':
-			selected_piece->type = PIECE_ROOK;
+			promoted_piece->type = PIECE_ROOK;
 			break;
 		case 'b':
-			selected_piece->type = PIECE_BISHOP;
+			promoted_piece->type = PIECE_BISHOP;
 			break;
 		default:
 			break;
@@ -127,24 +155,59 @@ bool move_piece(ChessGame *game, Command command)
 	}
 
 	// Write the move to the real board.
-	PlayPiece moved_piece = *selected_piece;
 	set_board(game->next_board, game->board);
 	game->move_count++;
-	INFO_LOG("game count: %ld\n", game->move_count);
-	INFO_LOG("Player %d (%s) has moved their %s to %c%c\n", game->turn + 1,
-		 PLAYER_COLOUR_STRINGS[game->turn],
-		 CHESS_PIECE_STRINGS[moved_piece.type], INT_TO_COORD(
-			 move_dest));
+
+	// Display the result.
+	switch (selected_move.type) {
+	case MOVEMENT_KING_CASTLE:
+		INFO_LOG("Player %d (%s) has castled their %s to %c%c\n",
+			 game->turn + 1,
+			 PLAYER_COLOUR_STRINGS[game->turn],
+			 CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
+				 move_dest));
+		break;
+	case MOVEMENT_PIECE_CAPTURE:
+		INFO_LOG(
+			"Player %d (%s) has moved their %s from %c%c to %c%c and\ncaptured %s's %s\n",
+			game->turn + 1,
+			PLAYER_COLOUR_STRINGS[game->turn],
+			CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
+				game->selected_piece), INT_TO_COORD(
+				move_dest),
+			PLAYER_COLOUR_STRINGS[(game->turn + 1) %
+					      NUM_PLAYER_COLOURS ],
+			PIECE_SYMBOLS[target_piece.colour][target_piece.type]);
+		break;
+	case MOVEMENT_PAWN_PROMOTION:
+		INFO_LOG(
+			"Player %d (%s) has promoted their %s to a %s from %c%c to %c%c\n",
+			game->turn + 1,
+			PLAYER_COLOUR_STRINGS[game->turn],
+			CHESS_PIECE_STRINGS[PIECE_PAWN],
+			CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
+				game->selected_piece), INT_TO_COORD(
+				move_dest));
+		break;
+	default:
+		INFO_LOG(
+			"Player %d (%s) has moved their %s from %c%c to %c%c\n",
+			game->turn + 1,
+			PLAYER_COLOUR_STRINGS[game->turn],
+			CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
+				game->selected_piece), INT_TO_COORD(
+				move_dest));
+		break;
+	}
 
 	clear_piece_selection(game);
-	view_board(game->board, game->selected_piece, game->num_possible_moves,
-		   game->possible_moves);
 	return true;
 }
 
 void play_chess(ChessGame *game)
 {
 	// Play the game of chess!
+	clear_input_buffer(game);
 	view_board(game->board, game->selected_piece, game->num_possible_moves,
 		   game->possible_moves);
 
@@ -168,10 +231,9 @@ void play_chess(ChessGame *game)
 				break;
 			}
 			INFO_LOG(
-				"%s king located in check!\n",
-				PLAYER_COLOUR_STRINGS[((game->turn + 1) %
-						       NUM_PLAYER_COLOURS) +
-						      1]);
+				"%s king in check!\n",
+				PLAYER_COLOUR_STRINGS[(game->turn) %
+						      NUM_PLAYER_COLOURS]);
 		}
 
 		// Show the selected piece if we have one.
@@ -194,7 +256,7 @@ void play_chess(ChessGame *game)
 		switch (command) {
 		case COMMAND_SAVE:
 			INFO_LOG("Saving game...\n");
-			if (!serialize(game, "save.bin")) {
+			if (!serialize(game, game->input_buffer)) {
 				INFO_LOG("Unable to save game...\n");
 				continue;
 			}
@@ -202,7 +264,7 @@ void play_chess(ChessGame *game)
 			continue;
 		case COMMAND_LOAD:
 			INFO_LOG("Loading game...\n");
-			if (!deserialize(game, "save.bin")) {
+			if (!deserialize(game, game->input_buffer)) {
 				INFO_LOG("Unable to load game...\n");
 				continue;
 			}
@@ -214,24 +276,15 @@ void play_chess(ChessGame *game)
 		case COMMAND_FORFEIT:
 			INFO_LOG("%s player forfeits, %s player wins!\n",
 				 PLAYER_COLOUR_STRINGS[game->turn],
-				 PLAYER_COLOUR_STRINGS[game->turn + 1]);
+				 PLAYER_COLOUR_STRINGS[(game->turn + 1) %
+						       NUM_PLAYER_COLOURS]);
 			return;
 		case COMMAND_HELP:
 			INFO_LOG("%s", HELP_MESSAGE);
 			continue;
 		case COMMAND_SELECT: {
-			int selected =
-				input_to_index(game->input_buffer[0],
-					       game->input_buffer[1]);
-			if (game->board[selected].type == PIECE_NONE ||
-			    game->board[selected].colour != game->turn) {
+			if (!select_piece(game))
 				continue;
-			}
-			game->selected_piece = selected;
-			game->num_possible_moves = get_possible_moves_for_piece(
-				game->board, game->selected_piece,
-				game->possible_moves,
-				game->move_count, game->check);
 			view_board(game->board, game->selected_piece,
 				   game->num_possible_moves,
 				   game->possible_moves);
@@ -244,6 +297,25 @@ void play_chess(ChessGame *game)
 		case COMMAND_MOVE:
 			if (move_piece(game, command))
 				toggle_player_turn(game);
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
+				   game->possible_moves);
+			continue;
+		case COMMAND_QUICK_MOVE:
+			if (!select_piece(game))
+				continue;
+			game->input_pointer = 2;
+			game->input_buffer[0] = game->input_buffer[3];
+			game->input_buffer[1] = game->input_buffer[4];
+			game->input_buffer[2] = '\0';
+			if (!move_piece(game, command)) {
+				clear_piece_selection(game);
+				continue;
+			}
+			view_board(game->board, game->selected_piece,
+				   game->num_possible_moves,
+				   game->possible_moves);
+			toggle_player_turn(game);
 			continue;
 		case COMMAND_INVALID:
 		default:
@@ -253,7 +325,7 @@ void play_chess(ChessGame *game)
 	}
 }
 
-void play_chess_networked(ProgramMode mode, ChessGame *game,
+void play_chess_networked(GameMode mode, ChessGame *game,
 			  int connection_fd)
 {
 	// Play the game of chess!
@@ -280,10 +352,9 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 				break;
 			}
 			INFO_LOG(
-				"%s king located in check!\n",
-				PLAYER_COLOUR_STRINGS[((game->turn + 1) %
-						       NUM_PLAYER_COLOURS) +
-						      1]);
+				"%s king in check!\n",
+				PLAYER_COLOUR_STRINGS[(game->turn) %
+						      NUM_PLAYER_COLOURS]);
 			// Check if the game is in stalemate since it is not in
 			// check
 		} else if (!is_game_stalemate(game->board, game->turn,
@@ -336,17 +407,6 @@ void play_chess_networked(ProgramMode mode, ChessGame *game,
 				continue;
 			}
 			INFO_LOG("Game saved...\n");
-			continue;
-		case COMMAND_LOAD:
-			INFO_LOG("Loading game...\n");
-			if (!deserialize(game, "save.bin")) {
-				INFO_LOG("Unable to load game...\n");
-				continue;
-			}
-			INFO_LOG("Game loaded...\n");
-			view_board(game->board, game->selected_piece,
-				   game->num_possible_moves,
-				   game->possible_moves);
 			continue;
 		case COMMAND_FORFEIT:
 			if (game->turn == game->player) {

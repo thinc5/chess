@@ -1,6 +1,6 @@
-#include "pieces.h"
-
 #include <stddef.h>
+
+#include "pieces.h"
 
 const size_t STARTING_SIZES[NUM_CHESS_PIECES] = {
 	[PIECE_NONE] = 0, [PIECE_PAWN] = 8, [PIECE_KNIGHT] = 2,

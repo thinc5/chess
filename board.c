@@ -32,12 +32,12 @@ static const Board STARTING_BOARD = {
 	FIRST_ROW(COLOUR_BLACK),
 };
 
-void new_board(Board dest)
+void inline new_board(Board dest)
 {
 	memcpy(dest, STARTING_BOARD, sizeof(Board));
 }
 
-void set_board(Board src, Board dest)
+void inline set_board(Board src, Board dest)
 {
 	memcpy(dest, src, sizeof(Board));
 }

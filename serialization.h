@@ -3,7 +3,7 @@
 
 #include "game.h"
 
-int serialize(ChessGame *game, const char *filepath);
-int deserialize(ChessGame *game, const char *filepath);
+int serialize(ChessGame *game, char *filepath);
+int deserialize(ChessGame *game, char *filepath);
 
 #endif

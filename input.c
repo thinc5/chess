@@ -1,4 +1,5 @@
 #include "input.h"
+#include "board.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -6,12 +7,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "board.h"
 
 const char *COMMAND_STRINGS[] = {
 	"COMMAND_INVALID", "COMMAND_HELP", "COMMAND_SAVE", "COMMAND_ANSWER",
 	"COMMAND_LOAD", "COMMAND_FORFEIT", "COMMAND_CLEAR", "COMMAND_SELECT",
-	"COMMAND_MOVE", "COMMAND_PROMOTION", "NUM_COMMANDS",
+	"COMMAND_MOVE", "COMMAND_QUICK_MOVE", "COMMAND_PROMOTION",
+	"NUM_COMMANDS",
 };
 
 int input_to_index(char x, char y)
@@ -54,9 +55,13 @@ Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode)
 {
 	// Global commands, always allowed.
 	if (strncmp(input_buffer, "quit", INPUT_BUFFER_SIZE) == 0 ||
-	    strncmp(input_buffer, "exit", 4) == 0 ||
-	    strncmp(input_buffer, "ff", 4) == 0) {
+	    strncmp(input_buffer, "exit", INPUT_BUFFER_SIZE) == 0 ||
+	    strncmp(input_buffer, "ff", INPUT_BUFFER_SIZE) == 0) {
 		return COMMAND_FORFEIT;
+	}
+
+	if (strncmp(input_buffer, "clear", INPUT_BUFFER_SIZE) == 0) {
+		return COMMAND_CLEAR;
 	}
 
 	if (strncmp(input_buffer, "?", INPUT_BUFFER_SIZE) == 0 ||
@@ -64,20 +69,28 @@ Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode)
 		return COMMAND_HELP;
 	}
 
-	if (strncmp(input_buffer, "save", INPUT_BUFFER_SIZE) == 0) {
+	if (strncmp(input_buffer, "save", INPUT_BUFFER_SIZE) >= 0) {
 		return COMMAND_SAVE;
 	}
 
-	if (strncmp(input_buffer, "load", INPUT_BUFFER_SIZE) == 0) {
+	if (strncmp(input_buffer, "load", INPUT_BUFFER_SIZE) >= 0) {
 		return COMMAND_LOAD;
 	}
 
-	// Some commands are only avaliable in specific operation modes.
+	// Some commands are only available in specific operation modes.
 	switch (mode) {
 	case OPERATION_SELECT:
 		if (strnlen(input_buffer, INPUT_BUFFER_SIZE) == 2 &&
 		    valid_char_pairing(input_buffer[0], input_buffer[1])) {
 			return COMMAND_SELECT;
+		}
+		// Shorthand move, e.g. a2 a4
+		if (strnlen(input_buffer, INPUT_BUFFER_SIZE) == 5 &&
+		    valid_char_pairing(input_buffer[0],
+				       input_buffer[1]) &&
+		    input_buffer[2] == ' ' &&
+		    valid_char_pairing(input_buffer[3], input_buffer[4])) {
+			return COMMAND_QUICK_MOVE;
 		}
 		break;
 	case OPERATION_MOVE:
@@ -106,7 +119,7 @@ Command parse_input(char input_buffer[INPUT_BUFFER_SIZE], OperationMode mode)
 			// Valid piece?
 			switch (tolower(input_buffer[0])) {
 			case 'q':
-			case 'k':
+			case 'n':
 			case 'r':
 			case 'b':
 				return COMMAND_PROMOTION;

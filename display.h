@@ -7,6 +7,9 @@
 #define INT_TO_COORD(position) \
 	(position % BOARD_SIZE) + 'A', (position / BOARD_SIZE) + '1'
 
+
+void debug_show_piece(PlayPiece piece);
+
 void view_board(Board board, int selected, size_t possible_moves,
 		PossibleMove possible[MAX_POSSIBLE_MOVES]);
 void show_prompt(PlayerColour turn, ChessPiece piece);

@@ -1,22 +1,24 @@
+#include "game.h"
+#include "network.h"
+#include "replay.h"
+#include "serialization.h"
+#include "log.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "game.h"
-#include "network.h"
-#include "replay.h"
-#include "log.h"
-
 const char *GAME_MODE_COMMANDS[] = {
-	[MODE_LOCAL] = "local", [MODE_REPLAY] = "replay", [MODE_HOST] = "host",
-	[MODE_JOIN] = "join"
+	[GAME_MODE_LOCAL] = "local", [GAME_MODE_LOAD] = "load",
+	[GAME_MODE_REPLAY] = "replay", [GAME_MODE_HOST] = "host",
+	[GAME_MODE_JOIN] = "join"
 };
 
 static void init_args(ChessArgs *args)
 {
-	args->prog_mode = MODE_INVALID;
+	args->prog_mode = GAME_MODE_INVALID;
 	args->player1 = PLAYER_HUMAN;
 	args->player2 = PLAYER_HUMAN;
 }
@@ -25,26 +27,31 @@ static void parse_args(ChessArgs *args, int argc, char **argv)
 {
 	init_args(args);
 	if (argc == 1 ||
-	    (argc == 2 && strncmp(argv[1], GAME_MODE_COMMANDS[MODE_LOCAL],
+	    (argc == 2 && strncmp(argv[1], GAME_MODE_COMMANDS[GAME_MODE_LOCAL],
 				  strlen(GAME_MODE_COMMANDS[
-						 MODE_LOCAL])) == 0)) {
-		args->prog_mode = MODE_LOCAL;
+						 GAME_MODE_LOCAL])) == 0)) {
+		args->prog_mode = GAME_MODE_LOCAL;
 	} else if (argc == 3 &&
-		   strncmp(argv[1], GAME_MODE_COMMANDS[MODE_REPLAY],
-			   strlen(GAME_MODE_COMMANDS[MODE_REPLAY]))
+		   strncmp(argv[1], GAME_MODE_COMMANDS[GAME_MODE_LOAD],
+			   strlen(GAME_MODE_COMMANDS[GAME_MODE_LOAD]))
 		   == 0) {
-		args->prog_mode = MODE_REPLAY;
+		args->prog_mode = GAME_MODE_LOAD;
+	} else if (argc == 3 &&
+		   strncmp(argv[1], GAME_MODE_COMMANDS[GAME_MODE_REPLAY],
+			   strlen(GAME_MODE_COMMANDS[GAME_MODE_REPLAY]))
+		   == 0) {
+		args->prog_mode = GAME_MODE_REPLAY;
 	} else if ((argc == 2 || argc == 3 || argc == 4) &&
-		   strncmp(argv[1], GAME_MODE_COMMANDS[MODE_HOST],
+		   strncmp(argv[1], GAME_MODE_COMMANDS[GAME_MODE_HOST],
 			   strlen(GAME_MODE_COMMANDS
-				  [MODE_HOST])) == 0) {
-		args->prog_mode = MODE_HOST;
+				  [GAME_MODE_HOST])) == 0) {
+		args->prog_mode = GAME_MODE_HOST;
 	} else if ((argc == 3 || argc == 4) &&
-		   strncmp(argv[1], GAME_MODE_COMMANDS[MODE_JOIN],
+		   strncmp(argv[1], GAME_MODE_COMMANDS[GAME_MODE_JOIN],
 			   strlen(GAME_MODE_COMMANDS
-				  [MODE_JOIN])) == 0
+				  [GAME_MODE_JOIN])) == 0
 		   ) {
-		args->prog_mode = MODE_JOIN;
+		args->prog_mode = GAME_MODE_JOIN;
 	}
 }
 
@@ -62,13 +69,22 @@ int main(int argc, char **argv)
 	DEBUG_LOG("Running mode %s\n", GAME_MODE_COMMANDS[args.prog_mode]);
 
 	switch (args.prog_mode) {
-	case MODE_LOCAL:
+	case GAME_MODE_LOCAL:
 		play_chess(&game);
 		break;
-	case MODE_REPLAY:
+	case GAME_MODE_LOAD:
+		snprintf(game.input_buffer, INPUT_BUFFER_SIZE, "%s %s",
+			 argv[1], argv[2]);
+		if (!deserialize(&game, game.input_buffer)) {
+			INFO_LOG("Unable to load game: %s\n", argv[2]);
+			break;
+		}
+		play_chess(&game);
+		break;
+	case GAME_MODE_REPLAY:
 		replay_chess(&game, argv[2]);
 		break;
-	case MODE_HOST:
+	case GAME_MODE_HOST:
 		// Port is optional.
 		connection_fd = host_server(argc < 3 ? NULL : argv[2]);
 		if (connection_fd == 0) {
@@ -77,7 +93,7 @@ int main(int argc, char **argv)
 		play_chess_networked(args.prog_mode, &game, connection_fd);
 		close(connection_fd);
 		break;
-	case MODE_JOIN:
+	case GAME_MODE_JOIN:
 		connection_fd = connect_to_sever(argv[2], argv[3]);
 		if (connection_fd == 0) {
 			return 0;
