@@ -1,11 +1,12 @@
 chess
 chess2d
-chess.so
+obj/
 *.txt
 *.bin
-vgcore.*
-obj/
 *.unc*
 *.d
 *.o
+*.so
+*a
+vgcore.*
 .vscode/

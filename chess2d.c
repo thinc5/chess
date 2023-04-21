@@ -1,8 +1,8 @@
-#include "board.h"
-#include "game.h"
-#include "logic.h"
-#include "display.h"
-#include "log.h"
+#include "core/board.h"
+#include "core/game.h"
+#include "core/logic.h"
+#include "core/display.h"
+#include "core/log.h"
 
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>

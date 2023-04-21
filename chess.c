@@ -1,8 +1,8 @@
-#include "game.h"
-#include "network.h"
-#include "replay.h"
-#include "serialization.h"
-#include "log.h"
+#include "core/game.h"
+#include "core/network.h"
+#include "core/replay.h"
+#include "core/serialization.h"
+#include "core/log.h"
 
 #include <stdbool.h>
 #include <stdint.h>
