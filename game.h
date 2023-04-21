@@ -60,7 +60,9 @@ void play_chess_networked(
 	EGameMode mode, ChessGame *game, int connection_fd);
 void toggle_player_turn(ChessGame *game);
 bool select_piece(ChessGame *game);
+bool select_piece_loc(ChessGame *game, int selected);
 void clear_piece_selection(ChessGame *game);
-bool move_piece(ChessGame *game, ECommand command);
+bool move_piece(ChessGame *game);
+bool move_piece_loc(ChessGame *game, int selected);
 
 #endif

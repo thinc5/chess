@@ -7,6 +7,6 @@
 #include <stdlib.h>
 
 EReplayInput read_next_move_pgn(FILE *file, ChessGame *game, char *input_buffer,
-			       size_t *input_pointer);
+				size_t *input_pointer);
 
 #endif

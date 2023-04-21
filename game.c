@@ -57,6 +57,11 @@ bool select_piece(ChessGame *game)
 	int selected =
 		input_to_index(game->input_buffer[0],
 			       game->input_buffer[1]);
+	return select_piece_loc(game, selected);
+}
+
+bool select_piece_loc(ChessGame *game, int selected)
+{
 	if (game->board[selected].type == PIECE_NONE ||
 	    game->board[selected].colour != game->turn) {
 		return false;
@@ -78,19 +83,16 @@ void clear_piece_selection(ChessGame *game)
 	game->mode = OPERATION_SELECT;
 }
 
-bool move_piece(ChessGame *game, ECommand command)
+bool move_piece_loc(ChessGame *game, int loc)
 {
-	int move_dest = input_to_index(game->input_buffer[0],
-				       game->input_buffer[1]);
-
 	// Copy of piece we selected before we modify the board.
 	PlayPiece selected_piece = game->board[game->selected_piece];
 
 	// Copy of target piece before we modify the board.
-	PlayPiece target_piece = game->board[move_dest];
+	PlayPiece target_piece = game->board[loc];
 	int valid_move_index = -1;
 	for (size_t i = 0; i < game->num_possible_moves; i++) {
-		if (move_dest == game->possible_moves[i].target) {
+		if (loc == game->possible_moves[i].target) {
 			valid_move_index = i;
 			break;
 		}
@@ -105,7 +107,7 @@ bool move_piece(ChessGame *game, ECommand command)
 	// Process the movement.
 	process_movement(game->next_board, game->move_count,
 			 game->selected_piece,
-			 move_dest, game->check);
+			 loc, game->check);
 
 	// Handle a promotion?
 	if (selected_move.type == MOVEMENT_PAWN_PROMOTION) {
@@ -114,9 +116,9 @@ bool move_piece(ChessGame *game, ECommand command)
 		ECommand promotion_result = COMMAND_INVALID;
 
 		// Piece to modify on successful promotion.
-		PlayPiece *promoted_piece = &game->next_board[move_dest];
+		PlayPiece *promoted_piece = &game->next_board[loc];
 		while (promotion_result != COMMAND_PROMOTION) {
-			show_promotion_prompt(game->turn, move_dest);
+			show_promotion_prompt(game->turn, loc);
 			// Reset the buffer.
 			memset(game->input_buffer, 0, INPUT_BUFFER_SIZE);
 			game->input_pointer = 0;
@@ -146,7 +148,7 @@ bool move_piece(ChessGame *game, ECommand command)
 	// Did the player put themselves in checkmate or are they still in
 	// checkmate?
 	if (is_checkmate_for_player(game->next_board,
-				    game->next_board[move_dest].colour,
+				    game->next_board[loc].colour,
 				    game->move_count, game->check)) {
 		INFO_LOG("Checkmate, move aborted!\n");
 		// Reset the board.
@@ -165,7 +167,7 @@ bool move_piece(ChessGame *game, ECommand command)
 			 game->turn + 1,
 			 PLAYER_COLOUR_STRINGS[game->turn],
 			 CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
-				 move_dest));
+				 loc));
 		break;
 	case MOVEMENT_PIECE_CAPTURE:
 		INFO_LOG(
@@ -174,7 +176,7 @@ bool move_piece(ChessGame *game, ECommand command)
 			PLAYER_COLOUR_STRINGS[game->turn],
 			CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
 				game->selected_piece), INT_TO_COORD(
-				move_dest),
+				loc),
 			PLAYER_COLOUR_STRINGS[(game->turn + 1) %
 					      PLAYER_NUM_COLOURS ],
 			PIECE_SYMBOLS[target_piece.colour][target_piece.type]);
@@ -187,7 +189,7 @@ bool move_piece(ChessGame *game, ECommand command)
 			CHESS_PIECE_STRINGS[PIECE_PAWN],
 			CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
 				game->selected_piece), INT_TO_COORD(
-				move_dest));
+				loc));
 		break;
 	default:
 		INFO_LOG(
@@ -196,12 +198,20 @@ bool move_piece(ChessGame *game, ECommand command)
 			PLAYER_COLOUR_STRINGS[game->turn],
 			CHESS_PIECE_STRINGS[selected_piece.type], INT_TO_COORD(
 				game->selected_piece), INT_TO_COORD(
-				move_dest));
+				loc));
 		break;
 	}
 
 	clear_piece_selection(game);
 	return true;
+}
+
+bool move_piece(ChessGame *game)
+{
+	int move_dest = input_to_index(game->input_buffer[0],
+				       game->input_buffer[1]);
+
+	return move_piece_loc(game, move_dest);
 }
 
 void play_chess(ChessGame *game)
@@ -295,7 +305,7 @@ void play_chess(ChessGame *game)
 			clear_piece_selection(game);
 			continue;
 		case COMMAND_MOVE:
-			if (move_piece(game, command))
+			if (move_piece(game))
 				toggle_player_turn(game);
 			view_board(game->board, game->selected_piece,
 				   game->num_possible_moves,
@@ -308,7 +318,7 @@ void play_chess(ChessGame *game)
 			game->input_buffer[0] = game->input_buffer[3];
 			game->input_buffer[1] = game->input_buffer[4];
 			game->input_buffer[2] = '\0';
-			if (!move_piece(game, command)) {
+			if (!move_piece(game)) {
 				clear_piece_selection(game);
 				continue;
 			}
@@ -456,7 +466,7 @@ void play_chess_networked(EGameMode mode, ChessGame *game,
 				   game->possible_moves);
 			continue;
 		case COMMAND_MOVE:
-			if (move_piece(game, command)) {
+			if (move_piece(game)) {
 				INFO_LOG("Successfully moved piece!\n");
 				if (game->turn == game->player) {
 					write_network_line(connection_fd,

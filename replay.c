@@ -232,7 +232,7 @@ void replay_chess(ChessGame *game, const char *filepath)
 		// DEBUG_LOG("Selected command: %s\n", COMMAND_STRINGS[command]);
 		switch (command) {
 		case COMMAND_MOVE:
-			if (move_piece(game, command))
+			if (move_piece(game))
 				toggle_player_turn(game);
 			continue;
 		case COMMAND_QUICK_MOVE:
@@ -242,7 +242,7 @@ void replay_chess(ChessGame *game, const char *filepath)
 			game->input_buffer[0] = game->input_buffer[3];
 			game->input_buffer[1] = game->input_buffer[4];
 			game->input_buffer[2] = '\0';
-			if (!move_piece(game, command)) {
+			if (!move_piece(game)) {
 				clear_piece_selection(game);
 				continue;
 			}

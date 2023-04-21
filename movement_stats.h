@@ -40,7 +40,8 @@ typedef struct {
 extern const char *MOVEMENT_TYPE_STRINGS[MOVEMENT_NUM_TYPES];
 
 EMovementDirection
-get_movement_direction(size_t start_x, size_t start_y, size_t target_x, size_t target_y);
+get_movement_direction(size_t start_x, size_t start_y, size_t target_x,
+		       size_t target_y);
 
 MoveStats get_move_stats(size_t start, size_t target);
 
