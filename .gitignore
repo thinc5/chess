@@ -1,5 +1,6 @@
 chess
 chess2d
+chess3d
 obj/
 *.txt
 *.bin
@@ -10,3 +11,4 @@ obj/
 *a
 vgcore.*
 .vscode/
+*.obj
